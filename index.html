@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>EcoQuest 3D: Wildlife Rescue! | Year 6 Science 3D Interactive Game</title>
-  <link rel="stylesheet" href="styles.css" />
+  <title>EcoQuest 3D: Wildlife Rescue! | Year 6 Science Game</title>
+  <link rel="stylesheet" href="styles.css?v=3" />
   <!-- Three.js 3D WebGL Engine -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 </head>
@@ -13,22 +13,22 @@
   <!-- Celebration Confetti Canvas -->
   <canvas id="confetti-canvas"></canvas>
 
-  <!-- Simple Kid-Friendly & Lecturer-Friendly Top Bar -->
+  <!-- Pure Game Top Bar (Only Game Logo + Sound Toggle) -->
   <header class="arcade-topbar">
-    <div class="game-logo" onclick="showView('game')">
+    <div class="game-logo" onclick="returnToTitle()">
       <div class="logo-3d-badge">🌿</div>
       <div>
         <div class="logo-text-main">EcoQuest 3D: Wildlife Rescue!</div>
-        <div class="logo-text-sub">Year 6 Science • Interactive 3D Symbiosis Game</div>
+        <div class="logo-text-sub">Year 6 Science • Interactive 3D Symbiosis Adventure</div>
       </div>
     </div>
 
     <div class="top-actions">
-      <button id="sound-btn" class="btn-3d btn-3d-blue" onclick="toggleSound()">
-        🔊 Sound: ON
+      <button id="music-btn" class="btn-3d btn-3d-green" onclick="toggleAmbientMusic()">
+        🎵 BGM: OFF
       </button>
-      <button id="teacher-mode-btn" class="btn-3d btn-3d-purple" onclick="showView('teacher')">
-        👩‍🏫 Lecturer / Teacher View
+      <button id="sound-btn" class="btn-3d btn-3d-blue" onclick="toggleSound()">
+        🔊 Sound FX: ON
       </button>
     </div>
   </header>
@@ -36,230 +36,179 @@
   <main class="game-wrapper">
 
     <!-- ====================================================================
-         SECTION 1: 3D STUDENT GAME (WELCOME + 3D ARENA + VICTORY)
+         1. WELCOME / START SCREEN (WITH LIVE 3D WORLD PREVIEW)
          ==================================================================== -->
-    <section id="student-game-section">
+    <div id="welcome-screen" class="welcome-modal-backdrop">
+      <span class="welcome-badge">🎮 Interactive 3D Science Game • Year 6</span>
+      <h1 class="welcome-title">Welcome to EcoQuest 3D!</h1>
+      <p class="welcome-sub">
+        Spin the <strong>3D Animals &amp; Plants</strong>, use <strong>Power-Ups</strong>, and help <strong>Prof. Rimba the Tiger 🐯</strong> rescue Malaysia's rainforest &amp; coral reef!
+      </p>
 
-      <!-- 1A. SIMPLE, EXCITING 3D WELCOME CARD -->
-      <div id="welcome-screen" class="welcome-modal-backdrop">
-        <span class="welcome-badge">🎮 Interactive 3D Science Adventure • Year 6</span>
-        <h1 class="welcome-title">Explore the 3D Wildlife World!</h1>
-        <p class="welcome-sub">
-          Spin the <strong>3D Animals &amp; Plants</strong>, use <strong>Power-Ups</strong>, and help <strong>Prof. Rimba the Tiger 🐯</strong> rescue Malaysia's rainforest &amp; coral reef!
-        </p>
-
-        <div style="font-weight:800;color:#fde047;font-size:0.95rem;margin-bottom:8px;">
-          1. Pick Your 3D Explorer Character:
-        </div>
-
-        <div class="char-picker-grid">
-          <div class="char-card-3d selected" onclick="pickCharacter('🐯', this)">
-            <span class="char-emoji">🐯</span>
-            <div class="char-name">Malayan Tiger</div>
-          </div>
-          <div class="char-card-3d" onclick="pickCharacter('🐢', this)">
-            <span class="char-emoji">🐢</span>
-            <div class="char-name">Sea Turtle</div>
-          </div>
-          <div class="char-card-3d" onclick="pickCharacter('🦜', this)">
-            <span class="char-emoji">🦜</span>
-            <div class="char-name">Hornbill</div>
-          </div>
-          <div class="char-card-3d" onclick="pickCharacter('🦧', this)">
-            <span class="char-emoji">🦧</span>
-            <div class="char-name">Orangutan</div>
-          </div>
-        </div>
-
-        <div style="font-weight:800;color:#7dd3fc;font-size:0.95rem;margin-bottom:8px;">
-          2. Enter Your Name:
-        </div>
-        <div>
-          <input
-            id="player-name-input"
-            type="text"
-            class="name-box-input"
-            value="Aiman (Year 6)"
-            placeholder="Type your name..."
-          />
-        </div>
-
-        <button class="btn-3d giant-play-btn" onclick="startEcoQuest()">
-          ▶ PLAY 3D GAME NOW!
-        </button>
+      <div style="font-weight:800;color:#fde047;font-size:0.95rem;margin-bottom:8px;">
+        1. Choose Your 3D Explorer Character:
       </div>
 
-      <!-- 1B. INTERACTIVE 3D GAMEPLAY ARENA -->
-      <div id="arena-screen" style="display:none;">
-
-        <!-- Clean Visual HUD Strip -->
-        <div class="hud-strip">
-          <div id="hud-player" class="hud-pill">🐯 Aiman</div>
-          <div id="hud-xp" class="hud-pill" style="color:#fde047;">⭐ 0 pts</div>
-          <div id="hud-streak" class="hud-pill" style="color:#fb923c;">🔥 0</div>
-          <div id="hud-level-txt" class="hud-pill" style="color:#38bdf8;">Level 1 of 10</div>
-
-          <div class="progress-track-wrap">
-            <div class="progress-label-row">
-              <span>🌏 Ecosystem Rescued</span>
-              <span id="hud-progress-pct">0%</span>
-            </div>
-            <div class="progress-bar-outer">
-              <div id="hud-progress-fill" class="progress-bar-inner" style="width:0%;"></div>
-            </div>
-          </div>
+      <div class="char-picker-grid">
+        <div class="char-card-3d selected" onclick="pickCharacter('🐯', this)">
+          <span class="char-emoji">🐯</span>
+          <div class="char-name">Malayan Tiger</div>
         </div>
-
-        <!-- 2-Column 3D Stage & Big Arcade Buttons -->
-        <div class="play-grid-3d">
-
-          <!-- LEFT: Interactive Three.js 3D Diorama World -->
-          <div class="diorama-card-3d">
-            <div class="diorama-top-overlay">
-              <span id="diorama-topic-pill" class="level-topic-pill">🌿 Level 1: Mutualism (+ / +)</span>
-              <span id="diorama-interact-hint" class="spin-hint-pill">🔄 Drag to Spin 3D World • Click Animals!</span>
-            </div>
-
-            <!-- Live 3D WebGL Canvas -->
-            <div class="canvas-holder">
-              <canvas id="three-canvas"></canvas>
-            </div>
-
-            <div class="diorama-bottom-overlay">
-              <div id="tags-3d-container" class="tags-3d-row"></div>
-              <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
-                <button class="btn-3d btn-3d-blue" style="padding:8px 14px;font-size:0.84rem;" onclick="speakCurrentQuestion()">
-                  🔊 Read Question Out Loud
-                </button>
-                <button class="btn-3d btn-3d-amber" style="padding:8px 14px;font-size:0.84rem;" onclick="if(eco3d) eco3d.triggerCelebration()">
-                  ✨ Bounce 3D Models
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <!-- RIGHT: Friendly Tiger Mascot, Power-Ups & 4 Big 3D Answer Tiles -->
-          <div class="quiz-card-3d">
-            <div>
-              <!-- Prof. Rimba Mascot Guide -->
-              <div class="mascot-helper-bar">
-                <div class="mascot-avatar-3d">🐯</div>
-                <div id="mascot-speech" class="mascot-speech-text"></div>
-              </div>
-
-              <!-- Power-Ups Row -->
-              <div class="powerup-arcade-row">
-                <button id="pu-5050" class="btn-3d btn-3d-amber" onclick="useFiftyFifty()">
-                  ✂️ 50/50 (2)
-                </button>
-                <button id="pu-2x" class="btn-3d btn-3d-purple" onclick="useDoublePoints()">
-                  ⚡ 2x Points (2)
-                </button>
-                <button id="pu-hint" class="btn-3d btn-3d-blue" onclick="useTigerHint()">
-                  💡 Tiger Hint (3)
-                </button>
-              </div>
-
-              <!-- Question Prompt -->
-              <h2 id="question-title" class="question-big-title"></h2>
-
-              <!-- 4 Big Tactile 3D Answer Tiles -->
-              <div id="answers-container" class="answers-grid-3d"></div>
-            </div>
-
-            <!-- Instant Animated Feedback Card -->
-            <div id="feedback-popup" class="feedback-popup-3d"></div>
-          </div>
-
+        <div class="char-card-3d" onclick="pickCharacter('🐢', this)">
+          <span class="char-emoji">🐢</span>
+          <div class="char-name">Sea Turtle</div>
+        </div>
+        <div class="char-card-3d" onclick="pickCharacter('🦜', this)">
+          <span class="char-emoji">🦜</span>
+          <div class="char-name">Hornbill</div>
+        </div>
+        <div class="char-card-3d" onclick="pickCharacter('🦧', this)">
+          <span class="char-emoji">🦧</span>
+          <div class="char-name">Orangutan</div>
         </div>
       </div>
 
-      <!-- 1C. VICTORY TROPHY SCREEN -->
-      <div id="victory-screen" class="welcome-modal-backdrop" style="display:none;">
-        <div style="font-size:4rem;margin-bottom:8px;">🏆🌟🐯</div>
-        <h2 id="vic-title" class="welcome-title">Congratulations!</h2>
-        <p class="welcome-sub">
-          You rescued all 10 Malaysian 3D Ecosystems and mastered Symbiosis!
-        </p>
-
-        <div class="stat-cards-4" style="grid-template-columns:repeat(3,1fr);">
-          <div class="stat-card-3d">
-            <div id="vic-xp" class="stat-big" style="color:#fde047;">0 pts</div>
-            <div style="font-size:0.85rem;color:#cbd5e1;font-weight:700;">Total 3D Score</div>
-          </div>
-          <div class="stat-card-3d">
-            <div id="vic-pre" class="stat-big" style="color:#38bdf8;">0%</div>
-            <div style="font-size:0.85rem;color:#cbd5e1;font-weight:700;">First-Try Score</div>
-          </div>
-          <div class="stat-card-3d">
-            <div id="vic-post" class="stat-big" style="color:#4ade80;">0%</div>
-            <div style="font-size:0.85rem;color:#cbd5e1;font-weight:700;">Final Score (After Retry)</div>
-          </div>
-        </div>
-
-        <div style="display:flex;gap:14px;justify-content:center;flex-wrap:wrap;margin-top:20px;">
-          <button class="btn-3d giant-play-btn" onclick="startEcoQuest()">
-            🔄 Play 3D Game Again
-          </button>
-          <button class="btn-3d btn-3d-purple" style="font-size:1.1rem;padding:14px 26px;" onclick="showView('teacher')">
-            👩‍🏫 View Teacher Results Dashboard
-          </button>
-        </div>
+      <div style="font-weight:800;color:#7dd3fc;font-size:0.95rem;margin-bottom:8px;">
+        2. Enter Your Player Name:
+      </div>
+      <div>
+        <input
+          id="player-name-input"
+          type="text"
+          class="name-box-input"
+          value="Aiman"
+          placeholder="Type your name..."
+        />
       </div>
 
-    </section>
+      <button class="btn-3d giant-play-btn" onclick="startEcoQuest()">
+        ▶ START 3D ADVENTURE!
+      </button>
+    </div>
 
     <!-- ====================================================================
-         SECTION 2: SIMPLE, VISUAL LECTURER / TEACHER DASHBOARD
+         2. INTERACTIVE 3D GAMEPLAY ARENA
          ==================================================================== -->
-    <section id="teacher-view-section" style="display:none;">
-      <div class="teacher-panel-3d">
-        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
-          <div>
-            <span class="welcome-badge">👩‍🏫 Lecturer &amp; Teacher Analytics View • Year 6 Inovatif (32 Students)</span>
-            <h2 style="font-size:1.6rem;font-weight:900;">Class Results &amp; Student Misconception Spotter</h2>
-            <p style="color:#bae6fd;font-size:0.95rem;">
-              Click any question on the left to see which wrong option students picked and how the teacher explains it using the 3D model!
-            </p>
-          </div>
-          <button class="btn-3d btn-3d-green" onclick="showView('game')">
-            🎮 Return to 3D Game
-          </button>
-        </div>
+    <div id="arena-screen" style="display:none;">
 
-        <div class="stat-cards-4">
-          <div class="stat-card-3d">
-            <div class="stat-big" style="color:#38bdf8;">71.5%</div>
-            <div style="font-size:0.85rem;color:#cbd5e1;font-weight:700;">Round 1 Class Score</div>
-          </div>
-          <div class="stat-card-3d">
-            <div class="stat-big" style="color:#4ade80;">91.8%</div>
-            <div style="font-size:0.85rem;color:#cbd5e1;font-weight:700;">After Bonus Retry (+20.3%)</div>
-          </div>
-          <div class="stat-card-3d">
-            <div class="stat-big" style="color:#f43f5e;">Q3 &amp; Q2</div>
-            <div style="font-size:0.85rem;color:#cbd5e1;font-weight:700;">Tricky Questions Spotted</div>
-          </div>
-          <div class="stat-card-3d">
-            <div class="stat-big" style="color:#fde047;">32 / 32</div>
-            <div style="font-size:0.85rem;color:#cbd5e1;font-weight:700;">Students Participated</div>
-          </div>
-        </div>
+      <!-- Clean Kid-Friendly Game HUD -->
+      <div class="hud-strip">
+        <div id="hud-player" class="hud-pill">🐯 Aiman</div>
+        <div id="hud-xp" class="hud-pill" style="color:#fde047;">⭐ 0 pts</div>
+        <div id="hud-streak" class="hud-pill" style="color:#fb923c;">🔥 0 Streak</div>
+        <div id="hud-level-txt" class="hud-pill" style="color:#38bdf8;">Level 1 / 10</div>
 
-        <div class="play-grid-3d">
-          <div>
-            <h3 style="margin-bottom:10px;color:#fde047;">1. Click a Question to Inspect Class Accuracy:</h3>
-            <div id="teacher-q-list"></div>
+        <div class="progress-track-wrap">
+          <div class="progress-label-row">
+            <span>🌏 Ecosystem Rescued</span>
+            <span id="hud-progress-pct">0%</span>
           </div>
-          <div id="teacher-q-detail" style="background:rgba(7,18,34,0.85);border:2px solid rgba(56,189,248,0.35);border-radius:18px;padding:20px;"></div>
+          <div class="progress-bar-outer">
+            <div id="hud-progress-fill" class="progress-bar-inner" style="width:0%;"></div>
+          </div>
         </div>
       </div>
-    </section>
+
+      <!-- 2-Column 3D Stage & Big Arcade Buttons -->
+      <div class="play-grid-3d">
+
+        <!-- LEFT: Interactive Three.js 3D Diorama World -->
+        <div class="diorama-card-3d">
+          <div class="diorama-top-overlay">
+            <span id="diorama-topic-pill" class="level-topic-pill">🌿 Level 1: Mutualism (+ / +)</span>
+            <span id="diorama-interact-hint" class="spin-hint-pill">🔄 Drag to Spin 3D World • Click Animals!</span>
+          </div>
+
+          <!-- Live 3D WebGL Canvas -->
+          <div class="canvas-holder">
+            <canvas id="three-canvas"></canvas>
+          </div>
+
+          <div class="diorama-bottom-overlay">
+            <div id="tags-3d-container" class="tags-3d-row"></div>
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
+              <button class="btn-3d btn-3d-blue" style="padding:8px 14px;font-size:0.84rem;" onclick="speakCurrentQuestion()">
+                🔊 Read Question Out Loud
+              </button>
+              <button class="btn-3d btn-3d-amber" style="padding:8px 14px;font-size:0.84rem;" onclick="if(eco3d) eco3d.triggerCelebration()">
+                ✨ Jump 3D Models!
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- RIGHT: Friendly Tiger Mascot, Power-Ups & 4 Big 3D Answer Tiles -->
+        <div class="quiz-card-3d">
+          <div>
+            <!-- Prof. Rimba Mascot Guide -->
+            <div class="mascot-helper-bar">
+              <div class="mascot-avatar-3d">🐯</div>
+              <div id="mascot-speech" class="mascot-speech-text"></div>
+            </div>
+
+            <!-- Power-Ups Row -->
+            <div class="powerup-arcade-row">
+              <button id="pu-5050" class="btn-3d btn-3d-amber" onclick="useFiftyFifty()">
+                ✂️ 50/50 (2)
+              </button>
+              <button id="pu-2x" class="btn-3d btn-3d-purple" onclick="useDoublePoints()">
+                ⚡ 2x Points (2)
+              </button>
+              <button id="pu-hint" class="btn-3d btn-3d-blue" onclick="useTigerHint()">
+                💡 Tiger Hint (3)
+              </button>
+            </div>
+
+            <!-- Question Prompt -->
+            <h2 id="question-title" class="question-big-title"></h2>
+
+            <!-- 4 Big Tactile 3D Answer Tiles -->
+            <div id="answers-container" class="answers-grid-3d"></div>
+          </div>
+
+          <!-- Instant Animated Feedback Card -->
+          <div id="feedback-popup" class="feedback-popup-3d"></div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ====================================================================
+         3. VICTORY TROPHY SCREEN
+         ==================================================================== -->
+    <div id="victory-screen" class="welcome-modal-backdrop" style="display:none;">
+      <div style="font-size:4.2rem;margin-bottom:8px;">🏆🌟🐯</div>
+      <h2 id="vic-title" class="welcome-title">Congratulations!</h2>
+      <p class="welcome-sub">
+        You rescued all 10 Malaysian 3D Ecosystems and became a Master Junior Ecologist!
+      </p>
+
+      <div class="stat-cards-4" style="grid-template-columns:repeat(3,1fr);">
+        <div class="stat-card-3d">
+          <div id="vic-xp" class="stat-big" style="color:#fde047;">0 pts</div>
+          <div style="font-size:0.85rem;color:#cbd5e1;font-weight:700;">Total 3D Score</div>
+        </div>
+        <div class="stat-card-3d">
+          <div id="vic-pre" class="stat-big" style="color:#38bdf8;">0%</div>
+          <div style="font-size:0.85rem;color:#cbd5e1;font-weight:700;">First-Try Accuracy</div>
+        </div>
+        <div class="stat-card-3d">
+          <div id="vic-post" class="stat-big" style="color:#4ade80;">0%</div>
+          <div style="font-size:0.85rem;color:#cbd5e1;font-weight:700;">Final Mastery Score</div>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:14px;justify-content:center;flex-wrap:wrap;margin-top:20px;">
+        <button class="btn-3d giant-play-btn" onclick="startEcoQuest()">
+          🔄 Play 3D Game Again!
+        </button>
+      </div>
+    </div>
 
   </main>
 
-  <script src="scene3d.js"></script>
-  <script src="questions.js"></script>
-  <script src="app.js"></script>
+  <script src="scene3d.js?v=3"></script>
+  <script src="questions.js?v=3"></script>
+  <script src="app.js?v=3"></script>
 </body>
 </html>

@@ -1,11 +1,13 @@
 // ============================================================================
-// ECOQUEST 3D GAME CONTROLLER, CONFETTI ENGINE & TEACHER DASHBOARD
+// ECOQUEST 3D GAME CONTROLLER, CONFETTI ENGINE & SOUND SYNTHESIZER
+// Pure 3D Student Game Prototype (KSSR Year 6 Science)
 // ============================================================================
 
 const gameState = {
   studentName: "Aiman",
   avatar: "🐯",
   soundEnabled: true,
+  musicEnabled: false,
   currentIndex: 0,
   isRedemptionPhase: false,
   redemptionQueue: [],
@@ -21,15 +23,13 @@ const gameState = {
     fiftyFifty: 2,
     doubleXp: 2,
     hint: 3
-  },
-  history: [],
-  selectedAnalyticsQId: 3,
-  hideStudentNames: true
+  }
 };
 
 let eco3d = null;
+let bgmInterval = null;
 
-// Sound Synthesizer (Web Audio API)
+// Sound & Music Synthesizer (Web Audio API)
 class SoundEngine {
   constructor() {
     this.ctx = null;
@@ -81,7 +81,48 @@ class SoundEngine {
 
 const soundFX = new SoundEngine();
 
-// 2D Celebration Confetti Shower Overlay
+function toggleAmbientMusic() {
+  gameState.musicEnabled = !gameState.musicEnabled;
+  const btn = document.getElementById("music-btn");
+  if (btn) {
+    btn.innerHTML = gameState.musicEnabled ? "🎵 BGM: ON" : "🎵 BGM: OFF";
+  }
+  if (gameState.musicEnabled) {
+    const notes = [261.63, 329.63, 392.0, 523.25, 392.0, 329.63];
+    let stepIdx = 0;
+    bgmInterval = setInterval(() => {
+      if (gameState.musicEnabled && gameState.soundEnabled) {
+        soundFX.playTone(notes[stepIdx % notes.length], "sine", 0.35, 0, 0.045);
+        stepIdx++;
+      }
+    }, 550);
+  } else if (bgmInterval) {
+    clearInterval(bgmInterval);
+    bgmInterval = null;
+  }
+}
+
+function toggleSound() {
+  gameState.soundEnabled = !gameState.soundEnabled;
+  const btn = document.getElementById("sound-btn");
+  if (btn) {
+    btn.innerHTML = gameState.soundEnabled ? "🔊 Sound FX: ON" : "🔇 Sound FX: OFF";
+  }
+  if (!gameState.soundEnabled && "speechSynthesis" in window) {
+    window.speechSynthesis.cancel();
+  } else {
+    soundFX.playPowerup();
+  }
+}
+
+function returnToTitle() {
+  if ("speechSynthesis" in window) window.speechSynthesis.cancel();
+  document.getElementById("arena-screen").style.display = "none";
+  document.getElementById("victory-screen").style.display = "none";
+  document.getElementById("welcome-screen").style.display = "block";
+}
+
+// Celebration Confetti Shower Overlay
 function fireConfetti() {
   const canvas = document.getElementById("confetti-canvas");
   if (!canvas) return;
@@ -90,8 +131,8 @@ function fireConfetti() {
   canvas.height = window.innerHeight;
 
   const colors = ["#4ade80", "#fde047", "#38bdf8", "#f472b6", "#fb923c", "#c084fc"];
-  const pieces = Array.from({ length: 75 }, () => ({
-    x: canvas.width * 0.5 + (Math.random() - 0.5) * 300,
+  const pieces = Array.from({ length: 80 }, () => ({
+    x: canvas.width * 0.5 + (Math.random() - 0.5) * 320,
     y: canvas.height * 0.45,
     vx: (Math.random() - 0.5) * 14,
     vy: -Math.random() * 14 - 4,
@@ -107,7 +148,7 @@ function fireConfetti() {
     pieces.forEach((p) => {
       p.x += p.vx;
       p.y += p.vy;
-      p.vy += 0.42; // gravity
+      p.vy += 0.42;
       p.rot += p.vRot;
       ctx.save();
       ctx.translate(p.x, p.y);
@@ -126,43 +167,11 @@ function fireConfetti() {
   step();
 }
 
-// Character Selection on Welcome Screen
 function pickCharacter(emoji, cardEl) {
   gameState.avatar = emoji;
   document.querySelectorAll(".char-card-3d").forEach((c) => c.classList.remove("selected"));
   cardEl.classList.add("selected");
   soundFX.playTone(620, "sine", 0.08);
-}
-
-function toggleSound() {
-  gameState.soundEnabled = !gameState.soundEnabled;
-  const btn = document.getElementById("sound-btn");
-  if (btn) {
-    btn.innerHTML = gameState.soundEnabled ? "🔊 Sound: ON" : "🔇 Sound: OFF";
-  }
-  if (!gameState.soundEnabled && "speechSynthesis" in window) {
-    window.speechSynthesis.cancel();
-  } else {
-    soundFX.playPowerup();
-  }
-}
-
-function showView(viewName) {
-  document.getElementById("student-game-section").style.display = viewName === "game" ? "block" : "none";
-  document.getElementById("teacher-view-section").style.display = viewName === "teacher" ? "block" : "none";
-
-  const teacherBtn = document.getElementById("teacher-mode-btn");
-  if (teacherBtn) {
-    if (viewName === "teacher") {
-      teacherBtn.innerHTML = "🎮 Back to 3D Game";
-      teacherBtn.onclick = () => showView("game");
-      renderTeacherDashboard();
-    } else {
-      teacherBtn.innerHTML = "👩‍🏫 Lecturer / Teacher View";
-      teacherBtn.onclick = () => showView("teacher");
-      if (eco3d) setTimeout(() => eco3d.handleResize(), 60);
-    }
-  }
 }
 
 // Launch 3D Game
@@ -184,7 +193,6 @@ function startEcoQuest() {
   gameState.answeredCurrent = false;
   gameState.activeDoubleXp = false;
   gameState.powerups = { fiftyFifty: 2, doubleXp: 2, hint: 3 };
-  gameState.history = [];
 
   document.getElementById("welcome-screen").style.display = "none";
   document.getElementById("victory-screen").style.display = "none";
@@ -212,13 +220,13 @@ function getActiveQuestion() {
 function updateHUD() {
   document.getElementById("hud-player").textContent = `${gameState.avatar} ${gameState.studentName}`;
   document.getElementById("hud-xp").textContent = `⭐ ${gameState.xp} pts`;
-  document.getElementById("hud-streak").textContent = `🔥 ${gameState.streak}`;
+  document.getElementById("hud-streak").textContent = `🔥 ${gameState.streak} Streak`;
 
   const totalQ = QUESTION_BANK.length;
   if (!gameState.isRedemptionPhase) {
-    document.getElementById("hud-level-txt").textContent = `Level ${gameState.currentIndex + 1} of ${totalQ}`;
+    document.getElementById("hud-level-txt").textContent = `Level ${gameState.currentIndex + 1} / ${totalQ}`;
   } else {
-    document.getElementById("hud-level-txt").textContent = `🛡️ Bonus Retry ${gameState.redemptionIndex + 1} of ${gameState.redemptionQueue.length}`;
+    document.getElementById("hud-level-txt").textContent = `🛡️ Bonus Retry ${gameState.redemptionIndex + 1} / ${gameState.redemptionQueue.length}`;
   }
 
   const mastered = gameState.initialCorrectCount + gameState.redeemedCorrectCount;
@@ -226,7 +234,6 @@ function updateHUD() {
   document.getElementById("hud-progress-pct").textContent = `${pct}%`;
   document.getElementById("hud-progress-fill").style.width = `${pct}%`;
 
-  // Update Power-Up buttons
   const btn50 = document.getElementById("pu-5050");
   const btn2x = document.getElementById("pu-2x");
   const btnHint = document.getElementById("pu-hint");
@@ -250,20 +257,17 @@ function renderCurrentLevel() {
 
   updateHUD();
 
-  // Load the matching 3D WebGL Scene!
   if (eco3d) {
     eco3d.loadLevelScene(q.id);
     setTimeout(() => eco3d.handleResize(), 30);
   }
 
-  // Update 3D Top & Bottom Overlays
   document.getElementById("diorama-topic-pill").textContent = gameState.isRedemptionPhase
     ? `🛡️ BONUS RETRY: ${q.category}`
     : `🌿 Level ${q.id}: ${q.category}`;
 
   document.getElementById("diorama-interact-hint").textContent = "🔄 Drag to Spin 3D World • Click Animals to Bounce!";
 
-  // Render 3D Floating Species Tags
   const tagsRow = document.getElementById("tags-3d-container");
   tagsRow.innerHTML = "";
   (q.tags3D || []).forEach((t) => {
@@ -280,11 +284,9 @@ function renderCurrentLevel() {
     tagsRow.appendChild(div);
   });
 
-  // Update Prof. Rimba Mascot Speech & Question
   document.getElementById("mascot-speech").innerHTML = `<strong>Prof. Rimba 🐯:</strong> "${q.scenario}"`;
   document.getElementById("question-title").textContent = q.question;
 
-  // Render 4 Big 3D Arcade Answer Buttons
   const answersGrid = document.getElementById("answers-container");
   answersGrid.innerHTML = "";
   q.options.forEach((opt) => {
@@ -299,13 +301,11 @@ function renderCurrentLevel() {
     answersGrid.appendChild(btn);
   });
 
-  // Hide Feedback Popup
   const fb = document.getElementById("feedback-popup");
   fb.className = "feedback-popup-3d";
   fb.innerHTML = "";
 }
 
-// Power-Ups
 function useFiftyFifty() {
   if (gameState.powerups.fiftyFifty <= 0 || gameState.answeredCurrent) return;
   const q = getActiveQuestion();
@@ -386,11 +386,8 @@ function selectAnswer(optId) {
 
     if (!gameState.isRedemptionPhase) {
       gameState.initialCorrectCount++;
-      gameState.history.push({ qId: q.id, title: q.title, initialCorrect: true, redeemed: false });
     } else {
       gameState.redeemedCorrectCount++;
-      const h = gameState.history.find((item) => item.qId === q.id);
-      if (h) h.redeemed = true;
     }
 
     fb.className = "feedback-popup-3d show good";
@@ -413,7 +410,6 @@ function selectAnswer(optId) {
       if (!gameState.redemptionQueue.includes(q.id)) {
         gameState.redemptionQueue.push(q.id);
       }
-      gameState.history.push({ qId: q.id, title: q.title, initialCorrect: false, redeemed: false });
     }
 
     fb.className = "feedback-popup-3d show retry";
@@ -473,74 +469,3 @@ function showVictoryScreen() {
   document.getElementById("vic-pre").textContent = `${prePct}%`;
   document.getElementById("vic-post").textContent = `${postPct}%`;
 }
-
-// ============================================================================
-// VISUAL LECTURER / TEACHER DASHBOARD
-// ============================================================================
-function renderTeacherDashboard() {
-  const listEl = document.getElementById("teacher-q-list");
-  if (!listEl) return;
-  listEl.innerHTML = "";
-
-  QUESTION_BANK.forEach((q) => {
-    const acc = q.classStats.accuracy;
-    const isHotspot = acc < 65;
-    const color = acc < 60 ? "#f43f5e" : acc < 75 ? "#fbbf24" : "#34d399";
-
-    const div = document.createElement("div");
-    div.className = `q-bar-item ${gameState.selectedAnalyticsQId === q.id ? "active-q" : ""}`;
-    div.onclick = () => {
-      gameState.selectedAnalyticsQId = q.id;
-      renderTeacherDashboard();
-    };
-    div.innerHTML = `
-      <div style="display:flex;justify-content:space-between;font-weight:800;font-size:0.92rem;margin-bottom:6px;">
-        <span>Q${q.id}: ${q.title} ${isHotspot ? "⚠️" : "✅"}</span>
-        <span style="color:${color};">${acc}% Correct</span>
-      </div>
-      <div style="height:10px;background:rgba(0,0,0,0.4);border-radius:999px;overflow:hidden;">
-        <div style="height:100%;width:${acc}%;background:${color};border-radius:999px;"></div>
-      </div>
-    `;
-    listEl.appendChild(div);
-  });
-
-  // Render Right Inspector
-  const q = QUESTION_BANK.find((item) => item.id === gameState.selectedAnalyticsQId) || QUESTION_BANK[2];
-  const detailEl = document.getElementById("teacher-q-detail");
-  if (detailEl) {
-    let bars = "";
-    q.options.forEach((opt) => {
-      const cnt = q.classStats.distractorCounts[opt.id] || 0;
-      const pct = Math.round((cnt / 32) * 100);
-      const col = opt.isCorrect ? "#34d399" : cnt >= 6 ? "#f43f5e" : "#94a3b8";
-      bars += `
-        <div style="margin-bottom:12px;padding:12px;border-radius:12px;background:rgba(0,0,0,0.28);">
-          <div style="display:flex;justify-content:space-between;font-weight:800;font-size:0.9rem;margin-bottom:4px;">
-            <span>Option ${opt.id} ${opt.isCorrect ? "✅ (Correct)" : "❌"}: ${opt.text}</span>
-            <span style="color:${col};">${cnt}/32 (${pct}%)</span>
-          </div>
-          <div style="height:9px;background:rgba(255,255,255,0.08);border-radius:999px;overflow:hidden;">
-            <div style="height:100%;width:${pct}%;background:${col};"></div>
-          </div>
-          ${!opt.isCorrect && opt.misconceptionTag ? `<div style="margin-top:6px;font-size:0.82rem;color:#fda4af;font-weight:700;">🔍 Misconception Spotted: ${opt.misconceptionTag}</div>` : ""}
-        </div>
-      `;
-    });
-
-    detailEl.innerHTML = `
-      <h3 style="font-size:1.15rem;margin-bottom:6px;color:#7dd3fc;">Inspecting Q${q.id}: ${q.title}</h3>
-      <p style="font-size:0.95rem;margin-bottom:14px;color:#e2e8f0;">${q.question}</p>
-      ${bars}
-      <div style="padding:14px;border-radius:14px;background:rgba(16,185,129,0.15);border:2px solid #34d399;font-size:0.9rem;">
-        <strong style="color:#6ee7b7;">👩‍🏫 How Teacher Fixes This in Class (Lesson Plan Step 3):</strong><br/>
-        Project this anonymous chart on the board, show the 3D model, and ask pairs to hold up their <strong>[+ / 0 / -]</strong> cards before they play the Bonus Retry Round!
-      </div>
-    `;
-  }
-}
-
-window.addEventListener("DOMContentLoaded", () => {
-  // Initialize background 3D scene immediately if canvas is present
-  renderTeacherDashboard();
-});
