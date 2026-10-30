@@ -3,282 +3,206 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>EcoQuest: Interaction Among Living Things | Year 6 Science Formative Game Prototype</title>
+  <title>EcoQuest 3D: Wildlife Rescue! | Year 6 Science 3D Interactive Game</title>
   <link rel="stylesheet" href="styles.css" />
+  <!-- Three.js 3D WebGL Engine -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 </head>
 <body>
 
-  <!-- Top Navigation Bar -->
-  <header class="top-nav">
-    <div class="brand-cluster">
-      <div class="brand-logo" aria-hidden="true">🌿</div>
+  <!-- Celebration Confetti Canvas -->
+  <canvas id="confetti-canvas"></canvas>
+
+  <!-- Simple Kid-Friendly & Lecturer-Friendly Top Bar -->
+  <header class="arcade-topbar">
+    <div class="game-logo" onclick="showView('game')">
+      <div class="logo-3d-badge">🌿</div>
       <div>
-        <div class="brand-title">EcoQuest: Symbiosis &amp; Ecosystem Guardians</div>
-        <div class="brand-subtitle">KSSR Year 6 Science (Unit 4) • Self-Paced Gamified Formative Assessment Prototype</div>
+        <div class="logo-text-main">EcoQuest 3D: Wildlife Rescue!</div>
+        <div class="logo-text-sub">Year 6 Science • Interactive 3D Symbiosis Game</div>
       </div>
     </div>
 
-    <nav class="mode-tabs" aria-label="Prototype Views">
-      <button class="mode-tab active" onclick="switchMainView('student-play-view', this)">
-        🎮 Student Game Prototype
+    <div class="top-actions">
+      <button id="sound-btn" class="btn-3d btn-3d-blue" onclick="toggleSound()">
+        🔊 Sound: ON
       </button>
-      <button class="mode-tab" onclick="switchMainView('teacher-dashboard-view', this)">
-        📊 Teacher Misconception Analytics
-      </button>
-      <button class="mode-tab" onclick="switchMainView('blueprint-view', this)">
-        🛠️ Design Stages &amp; Rubric Map
-      </button>
-    </nav>
-
-    <div class="utility-controls">
-      <button id="sound-toggle-btn" class="util-btn active-toggle" onclick="toggleSound()">
-        🔊 Audio &amp; SFX: ON
-      </button>
-      <button id="calm-toggle-btn" class="util-btn active-toggle" onclick="toggleCalmMode()">
-        🌿 Mindful Self-Pace: ON
+      <button id="teacher-mode-btn" class="btn-3d btn-3d-purple" onclick="showView('teacher')">
+        👩‍🏫 Lecturer / Teacher View
       </button>
     </div>
   </header>
 
-  <main class="main-container">
+  <main class="game-wrapper">
 
     <!-- ====================================================================
-         VIEW 1: STUDENT INTERACTIVE GAME PROTOTYPE
+         SECTION 1: 3D STUDENT GAME (WELCOME + 3D ARENA + VICTORY)
          ==================================================================== -->
-    <section id="student-play-view" class="view-section active">
+    <section id="student-game-section">
 
-      <!-- 1A. WELCOME LOBBY SCREEN -->
-      <div id="lobby-screen" class="hero-card">
-        <div>
-          <span class="badge-pill">🔬 KSSR Science Year 6 • Unit 4: Interaction Among Living Things</span>
-          <h1 class="hero-title">Restore Malaysia's Rainforest &amp; Coral Reef Ecosystems!</h1>
-          <p class="hero-desc">
-            Welcome, Junior Ecologist! Unlike stressful timed paper tests, <strong>EcoQuest</strong> lets you explore real Malaysian wildlife interactions at your own pace. Earn <strong>XP</strong>, activate <strong>Bio-Lab Power-Ups</strong>, read instant <strong>Diagnostic Field Coaching</strong>, and use the <strong>Redemption Round</strong> to turn every mistake into 100% mastery!
-          </p>
-
-          <div class="feature-chips">
-            <div class="feature-chip">🖼️ <strong>10 Custom SVG Bio-Diagrams</strong> &amp; Audio Narration</div>
-            <div class="feature-chip">🛡️ <strong>Redemption Round</strong> (Second-Chance Mastery)</div>
-            <div class="feature-chip">⚡ <strong>3 Strategic Power-Ups</strong> (50/50, 2x XP, Shield)</div>
-            <div class="feature-chip">💡 <strong>Instant Diagnostic Feedback</strong> (+ / 0 / - Code)</div>
-          </div>
-
-          <div style="padding:12px 14px;border-radius:10px;background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.35);font-size:0.84rem;color:#d1fae5;">
-            <strong>🎯 Learning Objectives:</strong><br/>
-            1. <em>Classify</em> symbiotic relationships into Mutualism <code>[+ / +]</code>, Commensalism <code>[+ / 0]</code>, and Parasitism <code>[+ / -]</code>.<br/>
-            2. <em>Differentiate</em> epiphyte commensalism (e.g., Bird's Nest Fern) from plant parasitism (e.g., Rafflesia &amp; Mistletoe).<br/>
-            3. <em>Predict</em> population changes in Prey-Predator biological control and intraspecific competition.
-          </div>
-        </div>
-
-        <!-- Student Profile & Anxiety-Safe Check-in Panel -->
-        <div class="setup-panel">
-          <label class="setup-label" for="student-name-input">1. Enter Explorer Name &amp; Class</label>
-          <input
-            id="student-name-input"
-            type="text"
-            class="text-input"
-            value="Aiman Hakimi (6 Inovatif)"
-            placeholder="e.g., Siti Sarah (6 Inovatif)"
-          />
-
-          <span class="setup-label">2. Choose Your Malaysian Wildlife Guardian Avatar</span>
-          <div class="avatar-grid">
-            <button type="button" class="avatar-btn selected" onclick="selectAvatar('🐯', 'Malayan Tiger', this)">
-              <span>🐯</span>Tiger
-            </button>
-            <button type="button" class="avatar-btn" onclick="selectAvatar('🦤', 'Hornbill', this)">
-              <span>🦤</span>Hornbill
-            </button>
-            <button type="button" class="avatar-btn" onclick="selectAvatar('🐢', 'Sea Turtle', this)">
-              <span>🐢</span>Turtle
-            </button>
-            <button type="button" class="avatar-btn" onclick="selectAvatar('🦧', 'Orangutan', this)">
-              <span>🦧</span>Orangutan
-            </button>
-          </div>
-
-          <span class="setup-label">3. Pre-Quest Confidence Check-In (Anxiety-Free Zone)</span>
-          <div class="mood-grid">
-            <button type="button" class="mood-btn selected" onclick="selectMood('Ready & Curious', this)">
-              😊 Ready!
-            </button>
-            <button type="button" class="mood-btn" onclick="selectMood('A Bit Nervous (Calm Mode)', this)">
-              😅 A Bit Nervous
-            </button>
-            <button type="button" class="mood-btn" onclick="selectMood('Need Extra Clues', this)">
-              🤔 Need Clues
-            </button>
-          </div>
-
-          <button type="button" class="primary-cta" onclick="startEcoQuest()">
-            🚀 Launch EcoQuest Mission (10 Stages)
-          </button>
-        </div>
-      </div>
-
-      <!-- 1B. ACTIVE GAMEPLAY ARENA -->
-      <div id="gameplay-screen" style="display:none;">
-        <!-- HUD Bar -->
-        <div class="hud-bar">
-          <div class="hud-card">
-            <span class="hud-icon">🧑‍🔬</span>
-            <div>
-              <div class="hud-label">Junior Ecologist</div>
-              <div id="hud-player-name" class="hud-value">🐯 Aiman Hakimi</div>
-            </div>
-          </div>
-          <div class="hud-card">
-            <span class="hud-icon">⭐</span>
-            <div>
-              <div class="hud-label">Bio-Research XP</div>
-              <div id="hud-xp-value" class="hud-value">0 XP</div>
-            </div>
-          </div>
-          <div class="hud-card">
-            <span class="hud-icon">🔥</span>
-            <div>
-              <div class="hud-label">Mastery Streak</div>
-              <div id="hud-streak-value" class="hud-value">0 🔥</div>
-            </div>
-          </div>
-          <div class="hud-card">
-            <span class="hud-icon">🧭</span>
-            <div>
-              <div class="hud-label">Field Stage</div>
-              <div id="hud-stage-value" class="hud-value">Mission 1 / 10</div>
-            </div>
-          </div>
-          <div class="hud-card">
-            <span class="hud-icon">🌿</span>
-            <div>
-              <div class="hud-label">Assessment Pace</div>
-              <div id="hud-pace-value" class="hud-value" style="font-size:0.86rem;color:#6ee7b7;">Calm Mode (No Timer Stress)</div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Ecosystem Restoration Progress & Power-Ups Bar -->
-        <div class="arena-subbar">
-          <div class="eco-meter-wrap">
-            <div class="eco-meter-header">
-              <span>🌏 Malaysian Ecosystem Restoration Progress</span>
-              <span id="eco-meter-pct">0% Restored</span>
-            </div>
-            <div class="eco-meter-track">
-              <div id="eco-meter-fill" class="eco-meter-fill" style="width:0%;"></div>
-            </div>
-          </div>
-
-          <div class="powerups-bar">
-            <span style="font-size:0.78rem;color:#94a3b8;font-weight:700;margin-right:4px;">POWER-UPS:</span>
-            <button id="pu-fifty" class="powerup-btn" onclick="useFiftyFifty()" title="Eliminate 2 wrong distractors">
-              🔍 50/50 Filter (2)
-            </button>
-            <button id="pu-double" class="powerup-btn" onclick="useDoubleXp()" title="Double XP on this question">
-              ⚡ 2x Bio-Boost (2)
-            </button>
-            <button id="pu-shield" class="powerup-btn" onclick="useStreakShield()" title="Protect your streak if you answer wrongly">
-              🛡️ Streak Shield (2)
-            </button>
-          </div>
-        </div>
-
-        <!-- Redemption Phase Banner (Visible during Second-Chance Round) -->
-        <div id="redemption-banner" style="display:none;margin-bottom:16px;padding:12px 18px;border-radius:12px;background:linear-gradient(90deg, rgba(14,165,233,0.22), rgba(16,185,129,0.22));border:1.5px solid #38bdf8;color:#e0f2fe;font-size:0.9rem;"></div>
-
-        <!-- Two-Column Multimedia & Question Arena -->
-        <div class="question-arena">
-          <!-- Left: Multimedia SVG Diagram, Audio Narration & Field Clue -->
-          <div class="multimedia-panel">
-            <div class="q-meta-row">
-              <span id="q-category-badge" class="q-category-badge">Symbiosis: Mutualism (+ / +)</span>
-              <span id="q-bloom-badge" class="q-bloom-badge">Bloom's: Understand &amp; Classify</span>
-            </div>
-
-            <h2 id="q-title" class="q-title">1. Coral Reef Partners: Clownfish &amp; Sea Anemone</h2>
-            <p id="q-scenario" class="q-scenario"></p>
-
-            <!-- Custom SVG Illustration Stage -->
-            <div id="q-svg-container" class="svg-stage"></div>
-
-            <!-- Multimedia Audio & Field Clue Controls -->
-            <div class="media-controls-bar">
-              <button type="button" class="audio-narrate-btn" onclick="narrateCurrentQuestion()">
-                <span id="audio-status-label">🔊 Listen to Field Guide Audio</span>
-              </button>
-              <button type="button" class="clue-toggle-btn" onclick="toggleFieldClue()">
-                💡 Toggle Ecological Clue (+ / 0 / -)
-              </button>
-            </div>
-
-            <div id="q-clue-box" class="clue-box"></div>
-          </div>
-
-          <!-- Right: Interactive Options & Automated Diagnostic Feedback -->
-          <div class="interaction-panel">
-            <div id="q-prompt" class="q-prompt"></div>
-            <div id="q-options-list" class="options-list"></div>
-
-            <!-- Automated Formative Feedback Drawer -->
-            <div id="feedback-drawer" class="feedback-drawer"></div>
-          </div>
-        </div>
-      </div>
-
-      <!-- 1C. END-OF-QUEST MASTERY SUMMARY & DIAGNOSTIC REPORT -->
-      <div id="summary-screen" class="summary-card" style="display:none;">
-        <span class="badge-pill">🏆 Formative Mastery Quest Completed</span>
-        <h2 id="sum-student-header" style="font-size:1.65rem;margin-bottom:8px;"></h2>
-        <p style="color:#cbd5e1;font-size:0.94rem;">
-          Great work! Look at how your <strong>Initial Diagnostic Score</strong> improved after reading the automated feedback and completing the <strong>Redemption Lab Round</strong>:
+      <!-- 1A. SIMPLE, EXCITING 3D WELCOME CARD -->
+      <div id="welcome-screen" class="welcome-modal-backdrop">
+        <span class="welcome-badge">🎮 Interactive 3D Science Adventure • Year 6</span>
+        <h1 class="welcome-title">Explore the 3D Wildlife World!</h1>
+        <p class="welcome-sub">
+          Spin the <strong>3D Animals &amp; Plants</strong>, use <strong>Power-Ups</strong>, and help <strong>Prof. Rimba the Tiger 🐯</strong> rescue Malaysia's rainforest &amp; coral reef!
         </p>
 
-        <div class="kpi-grid">
-          <div class="kpi-box">
-            <div id="sum-xp" class="kpi-num">0 XP</div>
-            <div class="kpi-title">Total Bio-Research XP</div>
+        <div style="font-weight:800;color:#fde047;font-size:0.95rem;margin-bottom:8px;">
+          1. Pick Your 3D Explorer Character:
+        </div>
+
+        <div class="char-picker-grid">
+          <div class="char-card-3d selected" onclick="pickCharacter('🐯', this)">
+            <span class="char-emoji">🐯</span>
+            <div class="char-name">Malayan Tiger</div>
           </div>
-          <div class="kpi-box">
-            <div id="sum-pre-acc" class="kpi-num" style="color:#38bdf8;">0%</div>
-            <div class="kpi-title">Initial First-Try Accuracy</div>
+          <div class="char-card-3d" onclick="pickCharacter('🐢', this)">
+            <span class="char-emoji">🐢</span>
+            <div class="char-name">Sea Turtle</div>
           </div>
-          <div class="kpi-box">
-            <div id="sum-post-acc" class="kpi-num" style="color:#34d399;">0%</div>
-            <div class="kpi-title">Final Mastery (Post-Redemption)</div>
+          <div class="char-card-3d" onclick="pickCharacter('🦜', this)">
+            <span class="char-emoji">🦜</span>
+            <div class="char-name">Hornbill</div>
           </div>
-          <div class="kpi-box">
-            <div id="sum-streak" class="kpi-num" style="color:#fbbf24;">0 🔥</div>
-            <div class="kpi-title">Highest Streak Achieved</div>
+          <div class="char-card-3d" onclick="pickCharacter('🦧', this)">
+            <span class="char-emoji">🦧</span>
+            <div class="char-name">Orangutan</div>
           </div>
         </div>
 
-        <h3 style="font-size:1.05rem;margin-bottom:8px;">📋 Personal Diagnostic Breakdown (Sent to Teacher Dashboard)</h3>
-        <div style="overflow-x:auto;">
-          <table class="data-table">
-            <thead>
-              <tr>
-                <th>Question Code</th>
-                <th>Ecological Scenario</th>
-                <th>Mastery Status</th>
-                <th>Diagnosed Concept / Misconception</th>
-              </tr>
-            </thead>
-            <tbody id="sum-history-tbody"></tbody>
-          </table>
+        <div style="font-weight:800;color:#7dd3fc;font-size:0.95rem;margin-bottom:8px;">
+          2. Enter Your Name:
+        </div>
+        <div>
+          <input
+            id="player-name-input"
+            type="text"
+            class="name-box-input"
+            value="Aiman (Year 6)"
+            placeholder="Type your name..."
+          />
         </div>
 
-        <div style="display:flex;gap:12px;margin-top:22px;flex-wrap:wrap;">
-          <button type="button" class="primary-cta" style="flex:1;" onclick="startEcoQuest()">
-            🔄 Play Again / New Student Attempt
+        <button class="btn-3d giant-play-btn" onclick="startEcoQuest()">
+          ▶ PLAY 3D GAME NOW!
+        </button>
+      </div>
+
+      <!-- 1B. INTERACTIVE 3D GAMEPLAY ARENA -->
+      <div id="arena-screen" style="display:none;">
+
+        <!-- Clean Visual HUD Strip -->
+        <div class="hud-strip">
+          <div id="hud-player" class="hud-pill">🐯 Aiman</div>
+          <div id="hud-xp" class="hud-pill" style="color:#fde047;">⭐ 0 pts</div>
+          <div id="hud-streak" class="hud-pill" style="color:#fb923c;">🔥 0</div>
+          <div id="hud-level-txt" class="hud-pill" style="color:#38bdf8;">Level 1 of 10</div>
+
+          <div class="progress-track-wrap">
+            <div class="progress-label-row">
+              <span>🌏 Ecosystem Rescued</span>
+              <span id="hud-progress-pct">0%</span>
+            </div>
+            <div class="progress-bar-outer">
+              <div id="hud-progress-fill" class="progress-bar-inner" style="width:0%;"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2-Column 3D Stage & Big Arcade Buttons -->
+        <div class="play-grid-3d">
+
+          <!-- LEFT: Interactive Three.js 3D Diorama World -->
+          <div class="diorama-card-3d">
+            <div class="diorama-top-overlay">
+              <span id="diorama-topic-pill" class="level-topic-pill">🌿 Level 1: Mutualism (+ / +)</span>
+              <span id="diorama-interact-hint" class="spin-hint-pill">🔄 Drag to Spin 3D World • Click Animals!</span>
+            </div>
+
+            <!-- Live 3D WebGL Canvas -->
+            <div class="canvas-holder">
+              <canvas id="three-canvas"></canvas>
+            </div>
+
+            <div class="diorama-bottom-overlay">
+              <div id="tags-3d-container" class="tags-3d-row"></div>
+              <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
+                <button class="btn-3d btn-3d-blue" style="padding:8px 14px;font-size:0.84rem;" onclick="speakCurrentQuestion()">
+                  🔊 Read Question Out Loud
+                </button>
+                <button class="btn-3d btn-3d-amber" style="padding:8px 14px;font-size:0.84rem;" onclick="if(eco3d) eco3d.triggerCelebration()">
+                  ✨ Bounce 3D Models
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- RIGHT: Friendly Tiger Mascot, Power-Ups & 4 Big 3D Answer Tiles -->
+          <div class="quiz-card-3d">
+            <div>
+              <!-- Prof. Rimba Mascot Guide -->
+              <div class="mascot-helper-bar">
+                <div class="mascot-avatar-3d">🐯</div>
+                <div id="mascot-speech" class="mascot-speech-text"></div>
+              </div>
+
+              <!-- Power-Ups Row -->
+              <div class="powerup-arcade-row">
+                <button id="pu-5050" class="btn-3d btn-3d-amber" onclick="useFiftyFifty()">
+                  ✂️ 50/50 (2)
+                </button>
+                <button id="pu-2x" class="btn-3d btn-3d-purple" onclick="useDoublePoints()">
+                  ⚡ 2x Points (2)
+                </button>
+                <button id="pu-hint" class="btn-3d btn-3d-blue" onclick="useTigerHint()">
+                  💡 Tiger Hint (3)
+                </button>
+              </div>
+
+              <!-- Question Prompt -->
+              <h2 id="question-title" class="question-big-title"></h2>
+
+              <!-- 4 Big Tactile 3D Answer Tiles -->
+              <div id="answers-container" class="answers-grid-3d"></div>
+            </div>
+
+            <!-- Instant Animated Feedback Card -->
+            <div id="feedback-popup" class="feedback-popup-3d"></div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- 1C. VICTORY TROPHY SCREEN -->
+      <div id="victory-screen" class="welcome-modal-backdrop" style="display:none;">
+        <div style="font-size:4rem;margin-bottom:8px;">🏆🌟🐯</div>
+        <h2 id="vic-title" class="welcome-title">Congratulations!</h2>
+        <p class="welcome-sub">
+          You rescued all 10 Malaysian 3D Ecosystems and mastered Symbiosis!
+        </p>
+
+        <div class="stat-cards-4" style="grid-template-columns:repeat(3,1fr);">
+          <div class="stat-card-3d">
+            <div id="vic-xp" class="stat-big" style="color:#fde047;">0 pts</div>
+            <div style="font-size:0.85rem;color:#cbd5e1;font-weight:700;">Total 3D Score</div>
+          </div>
+          <div class="stat-card-3d">
+            <div id="vic-pre" class="stat-big" style="color:#38bdf8;">0%</div>
+            <div style="font-size:0.85rem;color:#cbd5e1;font-weight:700;">First-Try Score</div>
+          </div>
+          <div class="stat-card-3d">
+            <div id="vic-post" class="stat-big" style="color:#4ade80;">0%</div>
+            <div style="font-size:0.85rem;color:#cbd5e1;font-weight:700;">Final Score (After Retry)</div>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:14px;justify-content:center;flex-wrap:wrap;margin-top:20px;">
+          <button class="btn-3d giant-play-btn" onclick="startEcoQuest()">
+            🔄 Play 3D Game Again
           </button>
-          <button
-            type="button"
-            class="primary-cta"
-            style="flex:1;background:linear-gradient(135deg, #0ea5e9, #2563eb);"
-            onclick="switchMainView('teacher-dashboard-view', document.querySelectorAll('.mode-tab')[1])"
-          >
-            📊 Open Teacher Misconception Analytics Dashboard →
+          <button class="btn-3d btn-3d-purple" style="font-size:1.1rem;padding:14px 26px;" onclick="showView('teacher')">
+            👩‍🏫 View Teacher Results Dashboard
           </button>
         </div>
       </div>
@@ -286,169 +210,55 @@
     </section>
 
     <!-- ====================================================================
-         VIEW 2: TEACHER FORMATIVE DATA & MISCONCEPTION ANALYTICS DASHBOARD
-         (Demonstrates Lesson Plan Step 3: Extracting Data & Fixing Misconceptions)
+         SECTION 2: SIMPLE, VISUAL LECTURER / TEACHER DASHBOARD
          ==================================================================== -->
-    <section id="teacher-dashboard-view" class="view-section">
-      <div class="dashboard-header">
-        <div>
-          <span class="badge-pill">📊 Real-Time Formative Assessment Analytics • Class 6 Inovatif (n = 32)</span>
-          <h2 style="font-size:1.45rem;">Teacher Command Center: Misconception Extraction &amp; Intervention</h2>
-          <p style="font-size:0.88rem;color:#cbd5e1;">
-            Demonstrates <strong>Lesson Plan Step 3 (Assessing Learning)</strong>: How the teacher identifies questions with &lt;60% accuracy, inspects distractor patterns anonymously, and conducts targeted misconception remediation.
-          </p>
-        </div>
-        <div style="display:flex;gap:10px;flex-wrap:wrap;">
-          <button id="toggle-anon-btn" class="util-btn active-toggle" onclick="toggleHideStudentNames()">
-            👁️ Show Student Names (Teacher Only)
-          </button>
-          <button class="util-btn" onclick="exportFormativeCSV()">
-            📥 Export Class CSV Report
-          </button>
-        </div>
-      </div>
-
-      <!-- Class Summary KPIs -->
-      <div class="kpi-grid" style="margin-top:0;margin-bottom:20px;">
-        <div class="kpi-box">
-          <div class="kpi-num" style="color:#38bdf8;">71.5%</div>
-          <div class="kpi-title">Initial Class Accuracy (Round 1)</div>
-        </div>
-        <div class="kpi-box">
-          <div class="kpi-num" style="color:#34d399;">91.8%</div>
-          <div class="kpi-title">Post-Redemption Mastery (+20.3%)</div>
-        </div>
-        <div class="kpi-box">
-          <div class="kpi-num" style="color:#f43f5e;">Q3 (47%) &amp; Q2 (53%)</div>
-          <div class="kpi-title">Flagged Misconception Hotspots</div>
-        </div>
-        <div class="kpi-box">
-          <div class="kpi-num" style="color:#fbbf24;">32 / 32</div>
-          <div class="kpi-title">Active Participation (16 Pairs)</div>
-        </div>
-      </div>
-
-      <!-- Heatmap & Question Distractor Inspector -->
-      <div class="dash-grid">
-        <div class="dash-card">
-          <h3>1. Question Accuracy Heatmap (Click Any Question to Inspect)</h3>
-          <p style="font-size:0.82rem;color:#94a3b8;margin-bottom:12px;">
-            Questions scoring below 65% are automatically flagged in red for immediate whole-class whiteboard review before the Redemption Round.
-          </p>
-          <div id="teacher-heatmap-list"></div>
-        </div>
-
-        <div class="dash-card">
-          <h3>2. Distractor &amp; Root Misconception Inspector</h3>
-          <p style="font-size:0.82rem;color:#94a3b8;margin-bottom:12px;">
-            Shows exact student option distribution and the step-by-step pedagogical intervention for the selected question.
-          </p>
-          <div id="teacher-q-inspector"></div>
-        </div>
-      </div>
-
-      <!-- Class Roster & Misconception Tag Table -->
-      <div class="dash-card">
-        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+    <section id="teacher-view-section" style="display:none;">
+      <div class="teacher-panel-3d">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
           <div>
-            <h3>3. Student Mastery &amp; Redemption Tracking Matrix</h3>
-            <p style="font-size:0.82rem;color:#94a3b8;">
-              Tracks initial score vs. post-redemption mastery and groups students by specific misconception tags for differentiated exit tickets.
+            <span class="welcome-badge">👩‍🏫 Lecturer &amp; Teacher Analytics View • Year 6 Inovatif (32 Students)</span>
+            <h2 style="font-size:1.6rem;font-weight:900;">Class Results &amp; Student Misconception Spotter</h2>
+            <p style="color:#bae6fd;font-size:0.95rem;">
+              Click any question on the left to see which wrong option students picked and how the teacher explains it using the 3D model!
             </p>
           </div>
-          <span class="q-category-badge">🔒 Smartboard Anonymizer Active by Default</span>
+          <button class="btn-3d btn-3d-green" onclick="showView('game')">
+            🎮 Return to 3D Game
+          </button>
         </div>
 
-        <div style="overflow-x:auto;">
-          <table class="data-table">
-            <thead>
-              <tr>
-                <th>Student / Anonymous ID</th>
-                <th>Round 1 Score</th>
-                <th>Post-Redemption Mastery</th>
-                <th>Flagged Question Codes</th>
-                <th>Primary Diagnosed Misconception</th>
-              </tr>
-            </thead>
-            <tbody id="teacher-roster-tbody"></tbody>
-          </table>
-        </div>
-      </div>
-    </section>
-
-    <!-- ====================================================================
-         VIEW 3: PROTOTYPE DESIGN STAGES & RUBRIC ALIGNMENT INSPECTOR
-         ==================================================================== -->
-    <section id="blueprint-view" class="view-section">
-      <div class="dashboard-header">
-        <div>
-          <span class="badge-pill">🛠️ HPGD3203 Question 2 • Prototype Architecture &amp; Builder Workspace</span>
-          <h2 style="font-size:1.45rem;">Stage 1 &amp; 2 Builder: Curriculum Blueprint, Multimedia Assets &amp; Feedback Logic</h2>
-          <p style="font-size:0.88rem;color:#cbd5e1;">
-            Interactive Question &amp; Misconception Authoring Matrix used during prototype construction (KSSR Year 6 Science, Unit 4: Interaction Among Living Things).
-          </p>
-        </div>
-      </div>
-
-      <div class="stage-cards-grid" style="margin-bottom:20px;">
-        <div class="stage-card">
-          <span class="stage-num">STAGE 1: CURRICULUM &amp; MISCONCEPTION BLUEPRINTING</span>
-          <h3 style="margin-bottom:8px;">Mapping KSSR Year 6 Science (Unit 4) to Diagnostic Distractors</h3>
-          <p style="font-size:0.86rem;color:#cbd5e1;">
-            Each of the 10 items in <code>questions.js</code> was reverse-engineered from documented Year 6 student misconceptions—specifically confusing <strong>Commensalism (+ / 0)</strong> with <strong>Parasitism (+ / -)</strong> in epiphytes (Bird's Nest Fern on Oil Palm) and marine hitchhikers (Remora on Shark). Every distractor is mapped to a specific <code>misconceptionTag</code>.
-          </p>
+        <div class="stat-cards-4">
+          <div class="stat-card-3d">
+            <div class="stat-big" style="color:#38bdf8;">71.5%</div>
+            <div style="font-size:0.85rem;color:#cbd5e1;font-weight:700;">Round 1 Class Score</div>
+          </div>
+          <div class="stat-card-3d">
+            <div class="stat-big" style="color:#4ade80;">91.8%</div>
+            <div style="font-size:0.85rem;color:#cbd5e1;font-weight:700;">After Bonus Retry (+20.3%)</div>
+          </div>
+          <div class="stat-card-3d">
+            <div class="stat-big" style="color:#f43f5e;">Q3 &amp; Q2</div>
+            <div style="font-size:0.85rem;color:#cbd5e1;font-weight:700;">Tricky Questions Spotted</div>
+          </div>
+          <div class="stat-card-3d">
+            <div class="stat-big" style="color:#fde047;">32 / 32</div>
+            <div style="font-size:0.85rem;color:#cbd5e1;font-weight:700;">Students Participated</div>
+          </div>
         </div>
 
-        <div class="stage-card">
-          <span class="stage-num">STAGE 2: CUSTOM MULTIMEDIA (SVG DIAGRAMS &amp; WEB AUDIO)</span>
-          <h3 style="margin-bottom:8px;">Dual-Coding Visual Ecological Diagrams &amp; Audio Narration</h3>
-          <p style="font-size:0.86rem;color:#cbd5e1;">
-            To support visual learners and reduce reading fatigue (Mayer's Multimedia Principle), custom scalable vector graphics (SVG) diagrams with explicit <code>[+ / 0 / -]</code> callout badges were embedded for all 10 scenarios alongside a Web Audio API sound synthesizer and Web Speech API field narration reader.
-          </p>
-        </div>
-
-        <div class="stage-card">
-          <span class="stage-num">STAGE 3: ANXIETY-REDUCING GAMIFICATION &amp; FEEDBACK ENGINE</span>
-          <h3 style="margin-bottom:8px;">Mindful Self-Pace Mode, Power-Ups &amp; Redemption Queue</h3>
-          <p style="font-size:0.86rem;color:#cbd5e1;">
-            To directly solve the classroom test-anxiety problem identified in Question 1, punitive speed-countdown timers were replaced with a <strong>Mindful Self-Pace Toggle</strong>, 3 strategic <strong>Power-Ups</strong> (50/50 Filter, 2x Bio-Boost, Streak Shield), immediate <strong>Diagnostic Coaching Drawers</strong>, and an automatic <strong>Redemption Lab Round</strong>.
-          </p>
-        </div>
-
-        <div class="stage-card">
-          <span class="stage-num">STAGE 4: TEACHER FORMATIVE ANALYTICS &amp; SMARTBOARD ANONYMIZER</span>
-          <h3 style="margin-bottom:8px;">Closing the Formative Loop with Real-Time Misconception Data</h3>
-          <p style="font-size:0.86rem;color:#cbd5e1;">
-            Built the <strong>Teacher Misconception Analytics Dashboard</strong> featuring a Question Accuracy Heatmap, Distractor Breakdown Inspector, CSV Exporter, and a one-click <strong>Hide Student Names (Smartboard Safe Mode)</strong> button so the teacher can review tricky questions without embarrassing struggling learners.
-          </p>
-        </div>
-      </div>
-
-      <!-- Authoring Blueprint Table -->
-      <div class="dash-card">
-        <h3>📋 Prototype Question Bank &amp; Multimedia Authoring Matrix (10 Custom Items)</h3>
-        <p style="font-size:0.82rem;color:#94a3b8;margin-bottom:10px;">
-          Complete specification of custom scenarios, Bloom's Taxonomy levels, SVG/Audio multimedia assets, and targeted misconception tags.
-        </p>
-        <div style="overflow-x:auto;">
-          <table class="data-table">
-            <thead>
-              <tr>
-                <th>Item Code</th>
-                <th>Ecological Topic &amp; Scenario</th>
-                <th>Bloom's Level</th>
-                <th>Multimedia Integrated</th>
-                <th>Target Misconception Addressed</th>
-              </tr>
-            </thead>
-            <tbody id="blueprint-matrix-tbody"></tbody>
-          </table>
+        <div class="play-grid-3d">
+          <div>
+            <h3 style="margin-bottom:10px;color:#fde047;">1. Click a Question to Inspect Class Accuracy:</h3>
+            <div id="teacher-q-list"></div>
+          </div>
+          <div id="teacher-q-detail" style="background:rgba(7,18,34,0.85);border:2px solid rgba(56,189,248,0.35);border-radius:18px;padding:20px;"></div>
         </div>
       </div>
     </section>
 
   </main>
 
+  <script src="scene3d.js"></script>
   <script src="questions.js"></script>
   <script src="app.js"></script>
 </body>
