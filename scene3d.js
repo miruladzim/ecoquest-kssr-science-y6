@@ -16,20 +16,18 @@ class EcoSimEngine {
     this.pins = [];
     this.isQuizLayout = true;
 
-    // Classic 3D Isometric Camera Angles (45° Yaw, ~55° Elevation, Narrow Telephoto FOV)
+    // Balanced 3D Isometric Three-Quarter Camera Angle (22° Yaw, 23.5° Elevation)
     this.camState = {
-      theta: Math.PI / 4,
-      phi: 0.98,
-      radius: 14.5,
-      targetTheta: Math.PI / 4,
-      targetPhi: 0.98,
-      targetRadius: 14.5,
+      theta: 0.38,
+      phi: 1.16,
+      radius: 13.2,
+      targetTheta: 0.38,
+      targetPhi: 1.16,
+      targetRadius: 13.2,
       autoOrbit: true,
       isDragging: false,
       lastX: 0,
-      lastY: 0,
-      lookAtX: 1.9,
-      targetLookAtX: 1.9
+      lastY: 0
     };
 
     this.initThree();
@@ -64,6 +62,7 @@ class EcoSimEngine {
     this.dioramaGroup = new THREE.Group();
     this.scene.add(this.dioramaGroup);
 
+    this.updateCenterOffset();
     window.addEventListener("resize", () => this.resize());
   }
 
@@ -161,26 +160,33 @@ class EcoSimEngine {
   }
 
   updateCenterOffset() {
-    if (this.isQuizLayout && window.innerWidth > 960) {
-      this.camState.targetLookAtX = 1.95;
+    if (!this.camera) return;
+    const w = window.innerWidth;
+    const h = window.innerHeight;
+    if (this.isQuizLayout && w > 960) {
+      // Shift frustum window so (0,0,0) renders cleanly in the open left 58% of the screen with ZERO angle distortion
+      this.camera.setViewOffset(w, h, Math.round(w * 0.17), Math.round(h * 0.04), w, h);
     } else {
-      this.camState.targetLookAtX = 0;
+      this.camera.clearViewOffset();
     }
+    this.camera.updateProjectionMatrix();
   }
 
   setCameraPreset(preset) {
     if (preset === "front") {
-      // Classic 45° Isometric Corner View
-      this.camState.targetTheta = Math.PI / 4;
-      this.camState.targetPhi = 0.98;
-      this.camState.targetRadius = 14.5;
+      // Balanced Three-Quarter Isometric View (shows side profile of animals + 3 cube faces)
+      this.camState.targetTheta = 0.38;
+      this.camState.targetPhi = 1.16;
+      this.camState.targetRadius = 13.2;
     } else if (preset === "top") {
+      // Classic High 45° Isometric Corner Overview
       this.camState.targetTheta = Math.PI / 4;
-      this.camState.targetPhi = 0.52;
-      this.camState.targetRadius = 15.5;
+      this.camState.targetPhi = 0.86;
+      this.camState.targetRadius = 14.2;
     } else if (preset === "closeup") {
-      this.camState.targetPhi = 1.05;
-      this.camState.targetRadius = 10.6;
+      this.camState.targetTheta = 0.22;
+      this.camState.targetPhi = 1.24;
+      this.camState.targetRadius = 9.8;
     } else if (preset === "orbit") {
       this.camState.autoOrbit = !this.camState.autoOrbit;
       const btn = document.getElementById("btn-cam-orbit");
@@ -193,7 +199,6 @@ class EcoSimEngine {
     const w = window.innerWidth;
     const h = window.innerHeight;
     this.camera.aspect = w / h;
-    this.camera.updateProjectionMatrix();
     this.renderer.setSize(w, h);
     this.updateCenterOffset();
   }
@@ -1136,24 +1141,22 @@ class EcoSimEngine {
     this.simValue += (this.targetSimValue - this.simValue) * 0.1;
     const s = this.simValue / 100;
 
-    // Gentle isometric turntable sway or full orbit
+    // Gentle three-quarter isometric sway around 0.38 rad (~22° yaw) so side profiles + cube faces stay clear
     if (this.camState.autoOrbit && !this.camState.isDragging) {
-      this.camState.targetTheta = Math.PI / 4 + Math.sin(t * 0.45) * 0.32;
+      this.camState.targetTheta = 0.38 + Math.sin(t * 0.45) * 0.16;
     }
     this.camState.theta += (this.camState.targetTheta - this.camState.theta) * 0.08;
     this.camState.phi += (this.camState.targetPhi - this.camState.phi) * 0.08;
     this.camState.radius += (this.camState.targetRadius - this.camState.radius) * 0.08;
-    this.camState.lookAtX += (this.camState.targetLookAtX - this.camState.lookAtX) * 0.08;
 
     const cx =
-      this.camState.lookAtX +
       this.camState.radius * Math.sin(this.camState.phi) * Math.sin(this.camState.theta);
     const cy = this.camState.radius * Math.cos(this.camState.phi);
     const cz =
       this.camState.radius * Math.sin(this.camState.phi) * Math.cos(this.camState.theta);
 
     this.camera.position.set(cx, cy, cz);
-    this.camera.lookAt(this.camState.lookAtX, -0.15, 0);
+    this.camera.lookAt(0, -0.05, 0);
 
     if (this.particleSystem) {
       this.particleSystem.rotation.y = t * 0.03;
