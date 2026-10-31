@@ -3,25 +3,19 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>EcoQuest 3D — Interactive Spatial Ecosystem Lab (Year 6 Science)</title>
-  <link rel="stylesheet" href="styles.css?v=11" />
+  <title>EcoQuest 3D — Dual-Visual Ecosystem Lab (Year 6 Science)</title>
+  <link rel="stylesheet" href="styles.css?v=12" />
 </head>
 <body>
-  <!-- Full-Viewport Interactive 3D WebGL Stage -->
-  <div id="webgl-stage"></div>
-
-  <!-- Real-Time Projected 3D Specimen Pins -->
-  <div id="pins-overlay"></div>
-
   <!-- Celebration Confetti Layer -->
   <canvas id="confetti-canvas"></canvas>
 
-  <!-- Minimalist Floating Spatial Navigation Bar -->
+  <!-- Minimalist Top Navigation Bar -->
   <header class="spatial-topbar">
     <button class="brand-btn" onclick="resetToHome()" title="Return to Home">
       <div class="brand-icon">3D</div>
       <span class="brand-title">EcoQuest 3D</span>
-      <span class="brand-sub">KSSR Year 6 Science</span>
+      <span class="brand-sub">KSSR Year 6 Science · Unit 4</span>
     </button>
 
     <!-- 10-Step Segmented Progress Bar -->
@@ -38,66 +32,110 @@
     </div>
   </header>
 
-  <!-- Floating Spatial Glass UI Layer -->
-  <main class="ui-layer">
+  <!-- Main Workspace -->
+  <main class="page-container">
     <!-- ====================================================================
-         VIEW 1: SPATIAL GLASS WELCOME CARD (Over Live 360° 3D Reef Diorama)
+         VIEW 1: WELCOME SCREEN WITH DUAL-VISUAL PREVIEW GALLERY
          ==================================================================== -->
-    <section id="screen-welcome" class="welcome-wrap">
-      <div class="spatial-card interactive-panel">
-        <span class="pill-tag">● Interactive 3D WebGL Lab</span>
+    <section id="screen-welcome" class="welcome-section">
+      <div class="welcome-card">
+        <span class="pill-tag">● Dual-Visual 3D Science Lab · Year 6 Unit 4</span>
         <h1 class="hero-h1">Interactions Among Living Things</h1>
         <p class="hero-p">
-          Rotate the live 3D ecosystem models 360°, manipulate real-time 3D variables, and master Symbiosis, Predation, and Competition.
+          Explore 10 KSSR ecosystem stages featuring <strong>both</strong> high-detail <strong>Gemini 3D Isometric Illustrations</strong> and <strong>Live Rotatable 3D WebGL Simulations</strong>.
         </p>
 
-        <div class="feature-chips">
-          <div class="f-chip">
-            <strong>360° 3D Dioramas</strong>
-            Drag to orbit & zoom in 3D space
+        <!-- Preview of Gemini 3D Isometric Visuals right on the Welcome Screen -->
+        <div class="welcome-gallery">
+          <div class="welcome-thumb" onclick="openPreviewLightbox('assets/q1.jpg')">
+            <img src="./assets/q1.jpg?v=12" alt="Clownfish & Sea Anemone 3D Isometric" />
+            <span>01 · Mutualism [+ / +]</span>
           </div>
-          <div class="f-chip">
-            <strong>Live 3D Controls</strong>
-            Slide to test 3D species interactions
+          <div class="welcome-thumb" onclick="openPreviewLightbox('assets/q2.jpg')">
+            <img src="./assets/q2.jpg?v=12" alt="Shark & Remora 3D Isometric" />
+            <span>02 · Commensalism [+ / 0]</span>
+          </div>
+          <div class="welcome-thumb" onclick="openPreviewLightbox('assets/q5.jpg')">
+            <img src="./assets/q5.jpg?v=12" alt="Cat & Tapeworm 3D Isometric" />
+            <span>05 · Parasitism [+ / -]</span>
+          </div>
+          <div class="welcome-thumb" onclick="openPreviewLightbox('assets/q9.jpg')">
+            <img src="./assets/q9.jpg?v=12" alt="Barn Owl Bio-Control 3D Isometric" />
+            <span>09 · Prey-Predator</span>
           </div>
         </div>
 
-        <label class="input-label" for="student-name">Student Name (Optional)</label>
-        <input
-          type="text"
-          id="student-name"
-          class="spatial-input"
-          placeholder="e.g., Aiman Hakimi (6 Bestari)"
-          maxlength="36"
-        />
-
-        <button class="cta-btn" onclick="startExpedition()">
-          Launch 3D Ecosystem Lab →
-        </button>
+        <div class="welcome-form-row">
+          <input
+            type="text"
+            id="student-name"
+            class="spatial-input"
+            placeholder="Enter Student Name (Optional, e.g. Aiman - 6 Bestari)"
+            maxlength="36"
+          />
+          <button class="cta-btn" onclick="startExpedition()">
+            Launch Dual-Visual 3D Lab →
+          </button>
+        </div>
       </div>
     </section>
 
     <!-- ====================================================================
-         VIEW 2: SPATIAL 3D LAB (Left: 3D Control Dock, Right: Floating Card)
+         VIEW 2: DUAL-VISUAL LAB (LEFT: 2 VISUAL CARDS, RIGHT: QUESTION CARD)
          ==================================================================== -->
-    <section id="screen-quiz" class="lab-spatial-layout" style="display: none;">
-      <!-- Bottom-Left Floating 3D Camera & Simulation Dock -->
-      <div class="dock-3d interactive-panel">
-        <div class="dock-top">
-          <span class="orbit-hint">🖱️ Drag 3D Scene to Rotate · Scroll to Zoom</span>
-          <div class="cam-btns">
-            <button class="cam-btn" onclick="set3DCamera('front')">Front</button>
-            <button class="cam-btn" onclick="set3DCamera('top')">Top</button>
-            <button class="cam-btn" onclick="set3DCamera('closeup')">Zoom</button>
-            <button class="cam-btn active" id="btn-cam-orbit" onclick="set3DCamera('orbit')">
-              Auto-Orbit
-            </button>
+    <section id="screen-quiz" class="lab-grid-layout" style="display: none;">
+      <!-- LEFT COLUMN: 2 SIDE-BY-SIDE / STACKED VISUAL CARDS -->
+      <div class="visuals-column">
+        <div class="dual-visuals-grid">
+          <!-- VISUAL CARD 1: GEMINI AI 3D ISOMETRIC SPECIMEN IMAGE -->
+          <div class="visual-card">
+            <div class="visual-card-header">
+              <span class="v-tag gemini-tag">✨ Visual 1 · Gemini 3D Iso Render</span>
+              <button class="cam-btn" onclick="openLightbox()">🔍 Enlarge</button>
+            </div>
+            <div class="gemini-viewport" onclick="openLightbox()" title="Click to enlarge HD 3D Isometric Render">
+              <img
+                id="gemini-specimen-img"
+                class="gemini-specimen-img"
+                src="./assets/q1.jpg?v=12"
+                alt="Gemini 3D Isometric Specimen"
+              />
+            </div>
+            <div class="visual-caption">
+              High-detail 3D isometric cutaway specimen illustration (Click image to zoom).
+            </div>
+          </div>
+
+          <!-- VISUAL CARD 2: LIVE INTERACTIVE 3D WEBGL SIMULATION -->
+          <div class="visual-card">
+            <div class="visual-card-header">
+              <span class="v-tag webgl-tag">🎮 Visual 2 · Interactive 3D Model</span>
+              <div class="cam-btns">
+                <button class="cam-btn" onclick="set3DCamera('front')">Iso</button>
+                <button class="cam-btn" onclick="set3DCamera('top')">Top</button>
+                <button class="cam-btn" onclick="set3DCamera('closeup')">Zoom</button>
+                <button class="cam-btn active" id="btn-cam-orbit" onclick="set3DCamera('orbit')">
+                  Orbit
+                </button>
+              </div>
+            </div>
+
+            <!-- Dedicated 3D WebGL Viewport Container -->
+            <div class="webgl-viewport-wrap">
+              <div id="webgl-stage"></div>
+              <div id="pins-overlay"></div>
+            </div>
+
+            <div class="visual-caption">
+              🖱️ Drag inside 3D box to rotate 360° · Scroll to zoom
+            </div>
           </div>
         </div>
 
-        <div class="sim-slider-box">
+        <!-- Interactive 3D Variable Control Slider Bar -->
+        <div class="sim-slider-card">
           <div class="sim-slider-header">
-            <span id="sim-control-label">3D Interactive Control</span>
+            <span id="sim-control-label">Interactive 3D Variable Control</span>
             <span id="sim-val-readout" style="color: #38bdf8;">80%</span>
           </div>
           <input
@@ -116,19 +154,13 @@
         </div>
       </div>
 
-      <!-- Right Floating Spatial Question Panel -->
-      <div class="question-spatial-card interactive-panel">
+      <!-- RIGHT COLUMN: QUESTION & DIAGNOSTIC FEEDBACK PANEL -->
+      <div class="question-spatial-card">
         <div class="q-top-row">
           <span class="q-badge" id="q-code-badge">01 · MUTUALISM (+ / +)</span>
           <button class="glass-pill-btn" onclick="narrateCurrentQuestion()">
             🔊 Listen
           </button>
-        </div>
-
-        <!-- Visual #2: Gemini-Generated 3D Isometric Specimen Render (alongside Visual #1 Live 3D WebGL) -->
-        <div class="gemini-specimen-box" onclick="openLightbox()" title="Click to enlarge AI 3D Specimen View">
-          <img id="gemini-specimen-img" class="gemini-specimen-img" src="assets/q1.jpg" alt="3D Isometric Specimen Illustration" />
-          <span class="gemini-overlay-tag">✨ AI 3D Iso Render · Click to Enlarge</span>
         </div>
 
         <div class="observation-note" id="q-scenario"></div>
@@ -153,7 +185,7 @@
           style="display: none; margin-bottom: 12px; padding: 9px 12px; border-radius: 8px; background: rgba(56, 189, 248, 0.14); border: 1px solid rgba(56, 189, 248, 0.35); font-size: 0.8rem; color: #e0f2fe;"
         ></div>
 
-        <!-- Tactile Answer Options -->
+        <!-- Answer Options -->
         <div class="options-list" id="options-list"></div>
 
         <!-- Instant Diagnostic Feedback Banner -->
@@ -164,17 +196,17 @@
           </div>
           <p class="fb-body" id="fb-text"></p>
           <button class="cta-btn" id="btn-next-q" onclick="nextQuestion()">
-            Next 3D Stage →
+            Next Stage →
           </button>
         </div>
       </div>
     </section>
 
     <!-- ====================================================================
-         VIEW 3: SPATIAL COMPLETION SUMMARY CARD
+         VIEW 3: COMPLETION SUMMARY CARD
          ==================================================================== -->
-    <section id="screen-summary" class="welcome-wrap" style="display: none;">
-      <div class="spatial-card interactive-panel" style="text-align: center;">
+    <section id="screen-summary" class="welcome-section" style="display: none;">
+      <div class="welcome-card" style="max-width: 580px; text-align: center;">
         <span class="pill-tag" id="sum-badge">● 3D Expedition Complete</span>
         <h2 class="hero-h1" id="sum-title">Ecosystem Mastery Achieved</h2>
         <p class="hero-p" id="sum-subtitle"></p>
@@ -201,14 +233,14 @@
     </section>
   </main>
 
-  <!-- Fullscreen Lightbox for Enlarged Gemini 3D Isometric Render -->
+  <!-- Fullscreen Lightbox Modal -->
   <div id="img-lightbox" class="lightbox-modal" onclick="closeLightbox()">
-    <img id="lightbox-img" class="lightbox-img" src="" alt="Enlarged 3D Isometric Specimen" />
+    <img id="lightbox-img" class="lightbox-img" src="./assets/q1.jpg?v=12" alt="Enlarged 3D Isometric Specimen" />
   </div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-  <script src="questions.js?v=11"></script>
-  <script src="scene3d.js?v=11"></script>
-  <script src="app.js?v=11"></script>
+  <script src="questions.js?v=12"></script>
+  <script src="scene3d.js?v=12"></script>
+  <script src="app.js?v=12"></script>
 </body>
 </html>

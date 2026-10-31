@@ -18,11 +18,11 @@ class EcoSimEngine {
 
     this.camState = {
       theta: 0.42,
-      phi: 1.12,
-      radius: 20.5,
+      phi: 1.1,
+      radius: 14.5,
       targetTheta: 0.42,
-      targetPhi: 1.12,
-      targetRadius: 20.5,
+      targetPhi: 1.1,
+      targetRadius: 14.5,
       autoOrbit: true,
       isDragging: false,
       lastX: 0,
@@ -38,11 +38,11 @@ class EcoSimEngine {
   }
 
   initThree() {
-    const w = window.innerWidth;
-    const h = window.innerHeight;
+    const w = this.container.clientWidth || 380;
+    const h = this.container.clientHeight || 310;
 
     this.scene = new THREE.Scene();
-    this.scene.fog = new THREE.FogExp2(0x070b14, 0.012);
+    this.scene.fog = new THREE.FogExp2(0x070b14, 0.015);
 
     this.camera = new THREE.PerspectiveCamera(34, w / h, 0.1, 160);
 
@@ -60,7 +60,6 @@ class EcoSimEngine {
     this.dioramaGroup = new THREE.Group();
     this.scene.add(this.dioramaGroup);
 
-    this.updateCenterOffset();
     window.addEventListener("resize", () => this.resize());
   }
 
@@ -151,34 +150,28 @@ class EcoSimEngine {
 
   setLayoutMode(isQuiz) {
     this.isQuizLayout = isQuiz;
-    this.updateCenterOffset();
+    this.resize();
   }
 
   updateCenterOffset() {
     if (!this.camera) return;
-    const w = window.innerWidth;
-    const h = window.innerHeight;
-    if (this.isQuizLayout && w > 960) {
-      this.camera.setViewOffset(w, h, Math.round(w * 0.17), Math.round(h * 0.05), w, h);
-    } else {
-      this.camera.clearViewOffset();
-    }
+    this.camera.clearViewOffset();
     this.camera.updateProjectionMatrix();
   }
 
   setCameraPreset(preset) {
     if (preset === "front") {
       this.camState.targetTheta = 0.42;
-      this.camState.targetPhi = 1.12;
-      this.camState.targetRadius = 20.5;
+      this.camState.targetPhi = 1.1;
+      this.camState.targetRadius = 14.5;
     } else if (preset === "top") {
       this.camState.targetTheta = Math.PI / 4;
       this.camState.targetPhi = 0.82;
-      this.camState.targetRadius = 22.0;
+      this.camState.targetRadius = 15.5;
     } else if (preset === "closeup") {
       this.camState.targetTheta = 0.28;
-      this.camState.targetPhi = 1.18;
-      this.camState.targetRadius = 15.0;
+      this.camState.targetPhi = 1.16;
+      this.camState.targetRadius = 10.5;
     } else if (preset === "orbit") {
       this.camState.autoOrbit = !this.camState.autoOrbit;
       const btn = document.getElementById("btn-cam-orbit");
@@ -187,12 +180,12 @@ class EcoSimEngine {
   }
 
   resize() {
-    if (!this.renderer || !this.camera) return;
-    const w = window.innerWidth;
-    const h = window.innerHeight;
+    if (!this.renderer || !this.camera || !this.container) return;
+    const w = this.container.clientWidth || 380;
+    const h = this.container.clientHeight || 310;
     this.camera.aspect = w / h;
+    this.camera.updateProjectionMatrix();
     this.renderer.setSize(w, h);
-    this.updateCenterOffset();
   }
 
   setSimValue(val) {
@@ -201,7 +194,7 @@ class EcoSimEngine {
 
   triggerFeedbackPulse() {
     const prev = this.camState.targetRadius;
-    this.camState.targetRadius = Math.max(15.0, prev - 2.2);
+    this.camState.targetRadius = Math.max(10.5, prev - 1.8);
     setTimeout(() => {
       this.camState.targetRadius = prev;
     }, 450);
@@ -663,9 +656,9 @@ class EcoSimEngine {
   }
 
   updateProjectedPins() {
-    if (!this.camera) return;
-    const w = window.innerWidth;
-    const h = window.innerHeight;
+    if (!this.camera || !this.container) return;
+    const w = this.container.clientWidth || 380;
+    const h = this.container.clientHeight || 310;
     this.pins.forEach((p) => {
       if (!p.el) return;
       const v = p.pos.clone();

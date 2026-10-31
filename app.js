@@ -134,13 +134,12 @@ function startExpedition() {
 
   document.getElementById("screen-welcome").style.display = "none";
   document.getElementById("screen-summary").style.display = "none";
-  document.getElementById("screen-quiz").style.display = "flex";
+  document.getElementById("screen-quiz").style.display = "grid";
 
-  if (ecoSim) {
-    ecoSim.setLayoutMode(true);
-    ecoSim.resize();
-  }
   loadCurrentQuestion();
+  setTimeout(() => {
+    if (ecoSim) ecoSim.resize();
+  }, 30);
 }
 
 function getActiveQuestion() {
@@ -189,10 +188,10 @@ function loadCurrentQuestion() {
     ecoSim.buildStage(q.id, defaultVal);
   }
 
-  // Update Visual #2: Gemini-Generated 3D Isometric Specimen Image
+  // Update Visual #1: Gemini-Generated 3D Isometric Specimen Image
   const geminiImg = document.getElementById("gemini-specimen-img");
   const lightboxImg = document.getElementById("lightbox-img");
-  const imgSrc = `assets/q${q.id}.jpg`;
+  const imgSrc = `./assets/q${q.id}.jpg?v=12`;
   if (geminiImg) {
     geminiImg.src = imgSrc;
     geminiImg.alt = q.title;
@@ -457,6 +456,14 @@ function fireConfetti(count = 35) {
 
 function openLightbox() {
   playSound("click");
+  const modal = document.getElementById("img-lightbox");
+  if (modal) modal.classList.add("open");
+}
+
+function openPreviewLightbox(src) {
+  playSound("click");
+  const lightboxImg = document.getElementById("lightbox-img");
+  if (lightboxImg) lightboxImg.src = src;
   const modal = document.getElementById("img-lightbox");
   if (modal) modal.classList.add("open");
 }
