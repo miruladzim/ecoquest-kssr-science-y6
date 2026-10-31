@@ -189,6 +189,19 @@ function loadCurrentQuestion() {
     ecoSim.buildStage(q.id, defaultVal);
   }
 
+  // Update Visual #2: Gemini-Generated 3D Isometric Specimen Image
+  const geminiImg = document.getElementById("gemini-specimen-img");
+  const lightboxImg = document.getElementById("lightbox-img");
+  const imgSrc = `assets/q${q.id}.jpg`;
+  if (geminiImg) {
+    geminiImg.src = imgSrc;
+    geminiImg.alt = q.title;
+  }
+  if (lightboxImg) {
+    lightboxImg.src = imgSrc;
+    lightboxImg.alt = q.title;
+  }
+
   document.getElementById("q-scenario").textContent = q.scenario;
   document.getElementById("q-prompt").textContent = q.question;
 
@@ -440,4 +453,16 @@ function fireConfetti(count = 35) {
     else ctx.clearRect(0, 0, canvas.width, canvas.height);
   }
   step();
+}
+
+function openLightbox() {
+  playSound("click");
+  const modal = document.getElementById("img-lightbox");
+  if (modal) modal.classList.add("open");
+}
+
+function closeLightbox() {
+  playSound("click");
+  const modal = document.getElementById("img-lightbox");
+  if (modal) modal.classList.remove("open");
 }

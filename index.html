@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>EcoQuest 3D — Interactive Spatial Ecosystem Lab (Year 6 Science)</title>
-  <link rel="stylesheet" href="styles.css?v=6" />
+  <link rel="stylesheet" href="styles.css?v=11" />
 </head>
 <body>
   <!-- Full-Viewport Interactive 3D WebGL Stage -->
@@ -125,6 +125,12 @@
           </button>
         </div>
 
+        <!-- Visual #2: Gemini-Generated 3D Isometric Specimen Render (alongside Visual #1 Live 3D WebGL) -->
+        <div class="gemini-specimen-box" onclick="openLightbox()" title="Click to enlarge AI 3D Specimen View">
+          <img id="gemini-specimen-img" class="gemini-specimen-img" src="assets/q1.jpg" alt="3D Isometric Specimen Illustration" />
+          <span class="gemini-overlay-tag">✨ AI 3D Iso Render · Click to Enlarge</span>
+        </div>
+
         <div class="observation-note" id="q-scenario"></div>
 
         <h2 class="q-heading" id="q-prompt"></h2>
@@ -195,9 +201,14 @@
     </section>
   </main>
 
+  <!-- Fullscreen Lightbox for Enlarged Gemini 3D Isometric Render -->
+  <div id="img-lightbox" class="lightbox-modal" onclick="closeLightbox()">
+    <img id="lightbox-img" class="lightbox-img" src="" alt="Enlarged 3D Isometric Specimen" />
+  </div>
+
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-  <script src="questions.js?v=10"></script>
-  <script src="scene3d.js?v=10"></script>
-  <script src="app.js?v=10"></script>
+  <script src="questions.js?v=11"></script>
+  <script src="scene3d.js?v=11"></script>
+  <script src="app.js?v=11"></script>
 </body>
 </html>
