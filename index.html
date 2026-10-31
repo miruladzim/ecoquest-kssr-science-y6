@@ -3,205 +3,191 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>EcoQuest 3D — Interactive Science Assessment</title>
-  <link rel="stylesheet" href="styles.css?v=4" />
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <title>EcoQuest — Interactive Ecosystem Lab (Year 6 Science)</title>
+  <link rel="stylesheet" href="styles.css?v=5" />
 </head>
 <body>
-
+  <!-- Celebration Confetti Layer -->
   <canvas id="confetti-canvas"></canvas>
 
-  <!-- Minimalist Top Navigation -->
-  <header class="topbar">
-    <div class="brand" onclick="returnToTitle()">
-      <div class="brand-mark">EQ</div>
-      <span class="brand-name">EcoQuest 3D</span>
-      <span class="brand-tag">Unit 4 · Interaction Among Living Things</span>
-    </div>
+  <!-- Minimalist Top Navigation Bar with Segmented Progress -->
+  <header class="top-header">
+    <button class="brand-btn" onclick="resetToHome()" title="Return to Home">
+      <div class="brand-icon">EQ</div>
+      <span class="brand-title">EcoQuest Lab</span>
+    </button>
 
-    <div class="topbar-controls">
-      <button id="music-btn" class="icon-btn" onclick="toggleAmbientMusic()">
-        Ambient Audio: Off
-      </button>
-      <button id="sound-btn" class="icon-btn active" onclick="toggleSound()">
-        Sound Effects: On
+    <!-- Brilliant.org-style 10-step Segmented Progress Bar -->
+    <div class="step-segments" id="step-segments" aria-label="Lesson progress"></div>
+
+    <div class="header-right">
+      <div class="score-pill">
+        <span id="hud-score">0 pts</span>
+        <span class="streak-badge" id="hud-streak"></span>
+      </div>
+      <button class="ghost-btn" id="btn-voice-toggle" onclick="toggleAutoVoice()">
+        🔊 Voice: ON
       </button>
     </div>
   </header>
 
-  <main class="container">
-
+  <main class="page-shell">
     <!-- ====================================================================
-         1. MINIMALIST ONBOARDING / START SCREEN
+         VIEW 1: MINIMALIST START SCREEN
          ==================================================================== -->
-    <section id="welcome-screen" class="onboarding-card">
-      <span class="eyebrow">Interactive 3D Formative Prototype</span>
-      <h1 class="onboarding-title">Interaction Among Living Things</h1>
-      <p class="onboarding-desc">
-        Inspect interactive 3D biological models across 10 Malaysian ecosystems. Classify symbiotic relationships, competition, and biological control at your own pace.
-      </p>
+    <section id="screen-welcome">
+      <div class="start-card">
+        <span class="pill-tag">KSSR Year 6 Science · Unit 4</span>
+        <h1 class="hero-h1">Interactions Among Living Things</h1>
+        <p class="hero-p">
+          Test live ecosystem variables—symbiosis, competition, and biological control—across 10 interactive lab stages.
+        </p>
 
-      <label class="field-label" for="player-name-input">Student Name</label>
-      <input
-        id="player-name-input"
-        type="text"
-        class="clean-input"
-        value="Aiman Hakimi"
-        placeholder="Enter your name"
-      />
+        <div class="welcome-preview-box">
+          <div class="preview-stat">
+            <strong>10 Interactive Models</strong>
+            Drag sliders to test live species outcomes
+          </div>
+          <div class="preview-stat" style="text-align: right;">
+            <strong>[+ / +] · [+ / 0] · [+ / -]</strong>
+            Instant diagnostic feedback
+          </div>
+        </div>
 
-      <span class="field-label">Select Field Specialization</span>
-      <div class="role-grid">
-        <div class="role-pill selected" onclick="pickRole('Marine', this)">
-          <span class="role-code">01</span>
-          <span class="role-title">Marine Reef</span>
-        </div>
-        <div class="role-pill" onclick="pickRole('Canopy', this)">
-          <span class="role-code">02</span>
-          <span class="role-title">Rainforest</span>
-        </div>
-        <div class="role-pill" onclick="pickRole('Botany', this)">
-          <span class="role-code">03</span>
-          <span class="role-title">Botany Lab</span>
-        </div>
-        <div class="role-pill" onclick="pickRole('Ecology', this)">
-          <span class="role-code">04</span>
-          <span class="role-title">Bio-Control</span>
-        </div>
+        <label class="input-label" for="student-name">Student Name (Optional)</label>
+        <input
+          type="text"
+          id="student-name"
+          class="modern-input"
+          placeholder="e.g., Aiman Hakimi (6 Bestari)"
+          maxlength="36"
+        />
+
+        <button class="cta-btn" onclick="startExpedition()">
+          Start Interactive Lab →
+        </button>
       </div>
-
-      <button class="primary-btn" onclick="startEcoQuest()">
-        Launch 3D Assessment →
-      </button>
     </section>
 
     <!-- ====================================================================
-         2. INTERACTIVE 3D WORKSPACE & ASSESSMENT ARENA
+         VIEW 2: 2-COLUMN INTERACTIVE SIMULATION & QUESTION LAB
          ==================================================================== -->
-    <section id="arena-screen" style="display:none;">
-
-      <!-- Minimalist Metrics Bar -->
-      <div class="hud-bar">
-        <div class="hud-metrics">
-          <div class="metric-item">
-            <span class="metric-label">Researcher</span>
-            <span id="hud-player" class="metric-val">Aiman Hakimi</span>
-          </div>
-          <div class="metric-item">
-            <span class="metric-label">Stage</span>
-            <span id="hud-level-txt" class="metric-val">01 / 10</span>
-          </div>
-          <div class="metric-item">
-            <span class="metric-label">Score</span>
-            <span id="hud-xp" class="metric-val" style="color:var(--accent);">0 PTS</span>
-          </div>
-          <div class="metric-item">
-            <span class="metric-label">Streak</span>
-            <span id="hud-streak" class="metric-val">0</span>
-          </div>
-        </div>
-
-        <div class="hud-progress">
-          <div class="hud-progress-head">
-            <span>Mastery Progress</span>
-            <span id="hud-progress-pct">0%</span>
-          </div>
-          <div class="hud-progress-track">
-            <div id="hud-progress-fill" class="hud-progress-fill" style="width:0%;"></div>
-          </div>
-        </div>
-      </div>
-
-      <!-- 2-Column Split View -->
-      <div class="workspace-grid">
-
-        <!-- Left: 3D WebGL Model Viewport -->
-        <div class="viewport-card">
-          <div class="viewport-header">
-            <span id="diorama-topic-pill" class="biome-tag">01 // MUTUALISM (+ / +)</span>
-            <span id="diorama-interact-hint" class="orbit-hint">360° Model · Drag to Orbit</span>
+    <section id="screen-quiz" style="display: none;">
+      <div class="lab-grid">
+        <!-- Left Column: Interactive Ecosystem Simulation Stage -->
+        <div class="sim-stage-card">
+          <div class="sim-top-bar">
+            <span class="sim-badge" id="q-code-badge">01 · MUTUALISM (+ / +)</span>
+            <button class="sim-audio-btn" onclick="narrateCurrentQuestion()">
+              🔊 Listen
+            </button>
           </div>
 
-          <div class="canvas-stage">
-            <canvas id="three-canvas"></canvas>
+          <div class="sim-viewport">
+            <canvas id="sim-canvas"></canvas>
           </div>
 
-          <div class="viewport-footer">
-            <div id="tags-3d-container" class="specimen-tags"></div>
-            <div class="viewport-actions">
-              <button class="icon-btn" onclick="speakCurrentQuestion()">
-                Read Audio Narration
-              </button>
-              <button class="icon-btn" onclick="if(eco3d) eco3d.resetCameraView()">
-                Reset 3D View
-              </button>
+          <!-- Interactive Simulation Variable Control -->
+          <div class="sim-control-box">
+            <div class="sim-control-header">
+              <span id="sim-control-label">Interactive Test: Adjust Ecosystem Variable</span>
+              <span id="sim-val-readout" style="color: #4f46e5;">80%</span>
+            </div>
+            <input
+              type="range"
+              id="sim-slider"
+              class="sim-slider"
+              min="0"
+              max="100"
+              value="80"
+              oninput="handleSimSlider(this.value)"
+            />
+            <div style="display: flex; justify-content: space-between; font-size: 0.72rem; color: #64748b; font-weight: 600;">
+              <span id="sim-min-label">Min</span>
+              <span id="sim-max-label">Max</span>
             </div>
           </div>
+
+          <!-- Species Outcome Pills -->
+          <div class="species-row" id="species-tags"></div>
         </div>
 
-        <!-- Right: Question & Options Panel -->
-        <div class="question-card">
-          <div>
-            <div id="mascot-speech" class="context-box"></div>
+        <!-- Right Column: Question & Minimalist Option Cards -->
+        <div class="question-panel">
+          <div class="observation-note" id="q-scenario"></div>
 
-            <!-- Minimalist Support Tools -->
-            <div class="powerups-strip">
-              <button id="pu-5050" class="tool-pill" onclick="useFiftyFifty()">
-                50/50 Filter (2)
-              </button>
-              <button id="pu-2x" class="tool-pill" onclick="useDoublePoints()">
-                2× Multiplier (2)
-              </button>
-              <button id="pu-hint" class="tool-pill" onclick="useTigerHint()">
-                Field Clue (3)
-              </button>
-            </div>
+          <h2 class="q-heading" id="q-prompt"></h2>
 
-            <h2 id="question-title" class="question-heading"></h2>
-
-            <div id="answers-container" class="options-stack"></div>
+          <!-- Support Tools -->
+          <div class="tools-bar">
+            <button class="tool-btn" id="pu-5050" onclick="usePowerUp('5050')">
+              ⚡ 50/50 Filter (2)
+            </button>
+            <button class="tool-btn" id="pu-double" onclick="usePowerUp('double')">
+              ⭐ 2× Points (2)
+            </button>
+            <button class="tool-btn" id="pu-clue" onclick="usePowerUp('clue')">
+              💡 Field Clue (2)
+            </button>
           </div>
 
-          <div id="feedback-popup" class="feedback-card"></div>
-        </div>
+          <!-- Clue Drawer -->
+          <div
+            id="clue-box"
+            style="display: none; margin-bottom: 14px; padding: 10px 14px; border-radius: 8px; background: #eef2ff; border: 1px solid #c7d2fe; font-size: 0.84rem; color: #3730a3; font-weight: 600;"
+          ></div>
 
+          <!-- Answer Options -->
+          <div class="options-list" id="options-list"></div>
+
+          <!-- Instant Diagnostic Feedback Banner -->
+          <div class="feedback-banner" id="feedback-panel">
+            <div class="fb-header">
+              <span id="fb-title"></span>
+              <span id="fb-pts"></span>
+            </div>
+            <p class="fb-body" id="fb-text"></p>
+            <button class="cta-btn" id="btn-next-q" onclick="nextQuestion()">
+              Continue →
+            </button>
+          </div>
+        </div>
       </div>
     </section>
 
     <!-- ====================================================================
-         3. COMPLETION SUMMARY CARD
+         VIEW 3: COMPLETION SUMMARY CARD
          ==================================================================== -->
-    <section id="victory-screen" class="onboarding-card" style="display:none;max-width:640px;">
-      <span class="eyebrow">Assessment Complete</span>
-      <h2 id="vic-title" class="onboarding-title">Session Summary</h2>
-      <p class="onboarding-desc">
-        All 10 ecological scenarios and redemption reviews have been completed.
-      </p>
+    <section id="screen-summary" style="display: none;">
+      <div class="start-card" style="max-width: 580px; text-align: center;">
+        <span class="pill-tag" id="sum-badge">Expedition Complete</span>
+        <h2 class="hero-h1" id="sum-title">Ecosystem Mastery Achieved</h2>
+        <p class="hero-p" id="sum-subtitle"></p>
 
-      <div class="summary-metrics">
-        <div class="summary-box">
-          <div id="vic-xp" class="summary-num" style="color:var(--accent);">0</div>
-          <div class="summary-lbl">Total Score</div>
+        <div class="kpi-row">
+          <div class="kpi-tile">
+            <div class="kpi-val" id="sum-score">0</div>
+            <div class="kpi-lbl">Total Points</div>
+          </div>
+          <div class="kpi-tile">
+            <div class="kpi-val" id="sum-accuracy">0%</div>
+            <div class="kpi-lbl">First-Try Accuracy</div>
+          </div>
+          <div class="kpi-tile">
+            <div class="kpi-val" id="sum-streak">0</div>
+            <div class="kpi-lbl">Best Streak</div>
+          </div>
         </div>
-        <div class="summary-box">
-          <div id="vic-pre" class="summary-num">0%</div>
-          <div class="summary-lbl">Initial Accuracy</div>
-        </div>
-        <div class="summary-box">
-          <div id="vic-post" class="summary-num" style="color:var(--accent);">0%</div>
-          <div class="summary-lbl">Final Mastery</div>
-        </div>
+
+        <button class="cta-btn" onclick="startExpedition()">
+          Play Again ↻
+        </button>
       </div>
-
-      <button class="primary-btn" onclick="startEcoQuest()">
-        Restart Assessment
-      </button>
     </section>
-
   </main>
 
-  <script src="scene3d.js?v=4"></script>
-  <script src="questions.js?v=4"></script>
-  <script src="app.js?v=4"></script>
+  <script src="questions.js?v=5"></script>
+  <script src="scene3d.js?v=5"></script>
+  <script src="app.js?v=5"></script>
 </body>
 </html>

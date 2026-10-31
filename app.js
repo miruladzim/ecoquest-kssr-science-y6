@@ -1,412 +1,453 @@
 // ============================================================================
-// ECOQUEST 3D — MINIMALIST ASSESSMENT CONTROLLER & AUDIO ENGINE
+// ECOQUEST — INTERACTIVE STEM LAB CONTROLLER (Brilliant.org Style)
+// Manages Segmented Progress, Interactive Sim Slider, Audio, and Mastery Retry
 // ============================================================================
 
 const gameState = {
-  studentName: "Aiman Hakimi",
-  role: "Marine",
-  soundEnabled: true,
-  musicEnabled: false,
+  studentName: "Explorer",
   currentIndex: 0,
-  isRedemptionPhase: false,
-  redemptionQueue: [],
-  redemptionIndex: 0,
-  xp: 0,
+  score: 0,
   streak: 0,
-  maxStreak: 0,
-  initialCorrectCount: 0,
-  redeemedCorrectCount: 0,
+  bestStreak: 0,
+  firstTryCorrect: 0,
+  autoVoice: true,
+  isRedemptionMode: false,
+  redemptionQueue: [],
+  doubleActive: false,
+  powerUps: { "5050": 2, double: 2, clue: 2 },
   answeredCurrent: false,
-  activeDoubleXp: false,
-  powerups: {
-    fiftyFifty: 2,
-    doubleXp: 2,
-    hint: 3
-  }
+  completedSteps: new Set()
 };
 
-let eco3d = null;
-let bgmInterval = null;
+let ecoSim = null;
+let audioCtx = null;
 
-class SoundEngine {
-  constructor() {
-    this.ctx = null;
-  }
-  init() {
-    if (!this.ctx) {
-      const AudioCtx = window.AudioContext || window.webkitAudioContext;
-      if (AudioCtx) this.ctx = new AudioCtx();
+// Initialize on DOM load
+window.addEventListener("DOMContentLoaded", () => {
+  ecoSim = new EcoSimEngine("sim-canvas");
+  renderStepSegments();
+});
+
+// Synthesized Web Audio UI chimes
+function playSound(type) {
+  try {
+    if (!audioCtx) {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     }
-  }
-  playTone(freq, type = "sine", duration = 0.14, delay = 0, gainVal = 0.1) {
-    if (!gameState.soundEnabled) return;
-    try {
-      this.init();
-      if (!this.ctx) return;
-      const osc = this.ctx.createOscillator();
-      const gain = this.ctx.createGain();
-      osc.type = type;
-      osc.frequency.setValueAtTime(freq, this.ctx.currentTime + delay);
-      gain.gain.setValueAtTime(gainVal, this.ctx.currentTime + delay);
-      gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + delay + duration);
-      osc.connect(gain);
-      gain.connect(this.ctx.destination);
-      osc.start(this.ctx.currentTime + delay);
-      osc.stop(this.ctx.currentTime + delay + duration);
-    } catch (e) {}
-  }
-  playCorrect() {
-    this.playTone(523.25, "sine", 0.12, 0, 0.12);
-    this.playTone(659.25, "sine", 0.14, 0.08, 0.12);
-    this.playTone(783.99, "sine", 0.22, 0.16, 0.12);
-  }
-  playGentleCoaching() {
-    this.playTone(392.0, "sine", 0.18, 0, 0.1);
-    this.playTone(349.23, "sine", 0.24, 0.14, 0.1);
-  }
-  playPowerup() {
-    this.playTone(587.33, "sine", 0.1, 0, 0.1);
-    this.playTone(880, "sine", 0.18, 0.08, 0.1);
-  }
-  playVictory() {
-    [523.25, 659.25, 783.99, 1046.5].forEach((f, idx) => {
-      this.playTone(f, "sine", 0.2, idx * 0.1, 0.12);
-    });
+    if (audioCtx.state === "suspended") audioCtx.resume();
+
+    const now = audioCtx.currentTime;
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+
+    if (type === "correct") {
+      osc.type = "triangle";
+      osc.frequency.setValueAtTime(523.25, now); // C5
+      osc.frequency.setValueAtTime(659.25, now + 0.09); // E5
+      osc.frequency.setValueAtTime(783.99, now + 0.18); // G5
+      gain.gain.setValueAtTime(0.14, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.42);
+      osc.start(now);
+      osc.stop(now + 0.42);
+    } else if (type === "wrong") {
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(280, now);
+      osc.frequency.setValueAtTime(220, now + 0.12);
+      gain.gain.setValueAtTime(0.12, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.32);
+      osc.start(now);
+      osc.stop(now + 0.32);
+    } else if (type === "click") {
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(620, now);
+      gain.gain.setValueAtTime(0.05, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.06);
+      osc.start(now);
+      osc.stop(now + 0.06);
+    }
+  } catch (_) {}
+}
+
+// Render Brilliant.org-style 10-step segmented top bar
+function renderStepSegments() {
+  const container = document.getElementById("step-segments");
+  if (!container) return;
+  container.innerHTML = "";
+  for (let i = 0; i < QUESTION_BANK.length; i++) {
+    const dot = document.createElement("div");
+    dot.className = "step-dot";
+    if (gameState.completedSteps.has(i)) {
+      dot.classList.add("done");
+    } else if (i === gameState.currentIndex && document.getElementById("screen-quiz")?.style.display !== "none") {
+      dot.classList.add("current");
+    }
+    container.appendChild(dot);
   }
 }
 
-const soundFX = new SoundEngine();
-
-function toggleAmbientMusic() {
-  gameState.musicEnabled = !gameState.musicEnabled;
-  const btn = document.getElementById("music-btn");
-  if (btn) {
-    btn.textContent = gameState.musicEnabled ? "Ambient Audio: On" : "Ambient Audio: Off";
-    btn.classList.toggle("active", gameState.musicEnabled);
+function updateTopHUD() {
+  const scoreEl = document.getElementById("hud-score");
+  const streakEl = document.getElementById("hud-streak");
+  if (scoreEl) scoreEl.textContent = `${gameState.score} pts`;
+  if (streakEl) {
+    streakEl.textContent = gameState.streak >= 2 ? `🔥 ${gameState.streak}` : "";
   }
-  if (gameState.musicEnabled) {
-    const notes = [261.63, 329.63, 392.0, 493.88];
-    let stepIdx = 0;
-    bgmInterval = setInterval(() => {
-      if (gameState.musicEnabled && gameState.soundEnabled) {
-        soundFX.playTone(notes[stepIdx % notes.length], "sine", 0.4, 0, 0.03);
-        stepIdx++;
-      }
-    }, 700);
-  } else if (bgmInterval) {
-    clearInterval(bgmInterval);
-    bgmInterval = null;
-  }
+  renderStepSegments();
 }
 
-function toggleSound() {
-  gameState.soundEnabled = !gameState.soundEnabled;
-  const btn = document.getElementById("sound-btn");
-  if (btn) {
-    btn.textContent = gameState.soundEnabled ? "Sound Effects: On" : "Sound Effects: Off";
-    btn.classList.toggle("active", gameState.soundEnabled);
-  }
-  if (!gameState.soundEnabled && "speechSynthesis" in window) {
-    window.speechSynthesis.cancel();
-  }
-}
-
-function returnToTitle() {
+function resetToHome() {
   if ("speechSynthesis" in window) window.speechSynthesis.cancel();
-  document.getElementById("arena-screen").style.display = "none";
-  document.getElementById("victory-screen").style.display = "none";
-  document.getElementById("welcome-screen").style.display = "block";
+  document.getElementById("screen-welcome").style.display = "block";
+  document.getElementById("screen-quiz").style.display = "none";
+  document.getElementById("screen-summary").style.display = "none";
+  renderStepSegments();
 }
 
-function pickRole(roleName, pillEl) {
-  gameState.role = roleName;
-  document.querySelectorAll(".role-pill").forEach((c) => c.classList.remove("selected"));
-  pillEl.classList.add("selected");
-  soundFX.playTone(540, "sine", 0.06, 0, 0.08);
-}
-
-function startEcoQuest() {
-  const nameInput = document.getElementById("player-name-input");
-  if (nameInput && nameInput.value.trim()) {
-    gameState.studentName = nameInput.value.trim();
-  }
-
+function startExpedition() {
+  playSound("click");
+  const nameInput = document.getElementById("student-name");
+  const rawName = nameInput ? nameInput.value.trim() : "";
+  gameState.studentName = rawName || "Explorer";
   gameState.currentIndex = 0;
-  gameState.isRedemptionPhase = false;
-  gameState.redemptionQueue = [];
-  gameState.redemptionIndex = 0;
-  gameState.xp = 0;
+  gameState.score = 0;
   gameState.streak = 0;
-  gameState.maxStreak = 0;
-  gameState.initialCorrectCount = 0;
-  gameState.redeemedCorrectCount = 0;
-  gameState.answeredCurrent = false;
-  gameState.activeDoubleXp = false;
-  gameState.powerups = { fiftyFifty: 2, doubleXp: 2, hint: 3 };
+  gameState.bestStreak = 0;
+  gameState.firstTryCorrect = 0;
+  gameState.isRedemptionMode = false;
+  gameState.redemptionQueue = [];
+  gameState.doubleActive = false;
+  gameState.powerUps = { "5050": 2, double: 2, clue: 2 };
+  gameState.completedSteps.clear();
 
-  document.getElementById("welcome-screen").style.display = "none";
-  document.getElementById("victory-screen").style.display = "none";
-  document.getElementById("arena-screen").style.display = "block";
+  document.getElementById("screen-welcome").style.display = "none";
+  document.getElementById("screen-summary").style.display = "none";
+  document.getElementById("screen-quiz").style.display = "block";
 
-  if (!eco3d) {
-    eco3d = new EcoWorld3D("three-canvas");
-  } else {
-    setTimeout(() => eco3d.handleResize(), 50);
-  }
-
-  soundFX.playPowerup();
-  renderCurrentLevel();
+  if (ecoSim) ecoSim.resize();
+  loadCurrentQuestion();
 }
 
 function getActiveQuestion() {
-  if (!gameState.isRedemptionPhase) {
-    return QUESTION_BANK[gameState.currentIndex];
-  } else {
-    const qId = gameState.redemptionQueue[gameState.redemptionIndex];
-    return QUESTION_BANK.find((q) => q.id === qId);
+  if (gameState.isRedemptionMode) {
+    return gameState.redemptionQueue[0];
   }
+  return QUESTION_BANK[gameState.currentIndex];
 }
 
-function updateHUD() {
-  document.getElementById("hud-player").textContent = gameState.studentName;
-  document.getElementById("hud-xp").textContent = `${gameState.xp} PTS`;
-  document.getElementById("hud-streak").textContent = `${gameState.streak}`;
-
-  const totalQ = QUESTION_BANK.length;
-  if (!gameState.isRedemptionPhase) {
-    const num = String(gameState.currentIndex + 1).padStart(2, "0");
-    document.getElementById("hud-level-txt").textContent = `${num} / ${totalQ}`;
-  } else {
-    document.getElementById("hud-level-txt").textContent = `RETRY ${gameState.redemptionIndex + 1} / ${gameState.redemptionQueue.length}`;
-  }
-
-  const mastered = gameState.initialCorrectCount + gameState.redeemedCorrectCount;
-  const pct = Math.min(100, Math.round((mastered / totalQ) * 100));
-  document.getElementById("hud-progress-pct").textContent = `${pct}%`;
-  document.getElementById("hud-progress-fill").style.width = `${pct}%`;
-
-  const btn50 = document.getElementById("pu-5050");
-  const btn2x = document.getElementById("pu-2x");
-  const btnHint = document.getElementById("pu-hint");
-
-  btn50.textContent = `50/50 Filter (${gameState.powerups.fiftyFifty})`;
-  btn50.disabled = gameState.powerups.fiftyFifty <= 0 || gameState.answeredCurrent;
-
-  btn2x.textContent = `2× Multiplier (${gameState.powerups.doubleXp})`;
-  btn2x.disabled = gameState.powerups.doubleXp <= 0 || gameState.answeredCurrent || gameState.activeDoubleXp;
-
-  btnHint.textContent = `Field Clue (${gameState.powerups.hint})`;
-  btnHint.disabled = gameState.powerups.hint <= 0 || gameState.answeredCurrent;
+function handleSimSlider(val) {
+  const readout = document.getElementById("sim-val-readout");
+  if (readout) readout.textContent = `${val}%`;
+  if (ecoSim) ecoSim.setSimValue(Number(val), false);
 }
 
-function renderCurrentLevel() {
+function loadCurrentQuestion() {
   const q = getActiveQuestion();
-  if (!q) return;
+  if (!q) return showSummaryScreen();
 
   gameState.answeredCurrent = false;
-  gameState.activeDoubleXp = false;
+  gameState.doubleActive = false;
+  updateTopHUD();
 
-  updateHUD();
-
-  if (eco3d) {
-    eco3d.loadLevelScene(q.id);
-    setTimeout(() => eco3d.handleResize(), 30);
+  // Top badge
+  const codeBadge = document.getElementById("q-code-badge");
+  if (codeBadge) {
+    codeBadge.textContent = gameState.isRedemptionMode
+      ? `MASTERY RETRY · ${q.code}`
+      : q.code;
   }
 
-  document.getElementById("diorama-topic-pill").textContent = gameState.isRedemptionPhase
-    ? `REDEMPTION REVIEW // ${q.category.toUpperCase()}`
-    : q.code;
+  // Interactive Slider Metadata
+  const ctrlLabel = document.getElementById("sim-control-label");
+  const minLabel = document.getElementById("sim-min-label");
+  const maxLabel = document.getElementById("sim-max-label");
+  const slider = document.getElementById("sim-slider");
+  const readout = document.getElementById("sim-val-readout");
 
-  document.getElementById("diorama-interact-hint").textContent = "360° Model · Drag to Orbit";
+  const defaultVal = q.simDefault !== undefined ? q.simDefault : 80;
+  if (ctrlLabel) ctrlLabel.textContent = q.simControlLabel || "Interactive Test: Adjust Variable";
+  if (minLabel) minLabel.textContent = q.simMinLabel || "0%";
+  if (maxLabel) maxLabel.textContent = q.simMaxLabel || "100%";
+  if (slider) slider.value = defaultVal;
+  if (readout) readout.textContent = `${defaultVal}%`;
 
-  const tagsRow = document.getElementById("tags-3d-container");
-  tagsRow.innerHTML = "";
-  (q.tags3D || []).forEach((t) => {
-    const div = document.createElement("div");
-    div.className = "specimen-chip";
-    div.innerHTML = `
-      <div class="specimen-name">${t.name}</div>
-      <div class="specimen-role" style="color:${t.color};">${t.effect}</div>
-    `;
-    tagsRow.appendChild(div);
-  });
+  // Build Interactive Canvas Stage
+  if (ecoSim) {
+    ecoSim.buildStage(q.id, defaultVal);
+  }
 
-  document.getElementById("mascot-speech").textContent = q.scenario;
-  document.getElementById("question-title").textContent = q.question;
+  // Species Outcome Pills
+  const tagsBox = document.getElementById("species-tags");
+  if (tagsBox) {
+    tagsBox.innerHTML = (q.tags3D || [])
+      .map(
+        (t) => `
+        <div class="species-pill">
+          <div class="species-name">${t.name}</div>
+          <div class="species-effect" style="color: ${t.color}">${t.effect}</div>
+        </div>
+      `
+      )
+      .join("");
+  }
 
-  const answersGrid = document.getElementById("answers-container");
-  answersGrid.innerHTML = "";
+  // Scenario & Question Prompt
+  document.getElementById("q-scenario").textContent = q.scenario;
+  document.getElementById("q-prompt").textContent = q.question;
+
+  // Reset Clue & Feedback
+  const clueBox = document.getElementById("clue-box");
+  if (clueBox) {
+    clueBox.style.display = "none";
+    clueBox.textContent = "";
+  }
+  const fbPanel = document.getElementById("feedback-panel");
+  if (fbPanel) {
+    fbPanel.className = "feedback-banner";
+  }
+
+  // Update Power-Up Buttons
+  updatePowerUpButtons();
+
+  // Render Options
+  const listEl = document.getElementById("options-list");
+  listEl.innerHTML = "";
   q.options.forEach((opt) => {
     const btn = document.createElement("button");
-    btn.className = "option-item";
-    btn.id = `ans-tile-${opt.id}`;
-    btn.onclick = () => selectAnswer(opt.id);
+    btn.className = "opt-card";
+    btn.dataset.optId = opt.id;
     btn.innerHTML = `
-      <span class="option-key">${opt.id}</span>
+      <span class="opt-key">${opt.id}</span>
       <span>${opt.text}</span>
     `;
-    answersGrid.appendChild(btn);
+    btn.onclick = () => selectAnswer(opt, btn);
+    listEl.appendChild(btn);
   });
 
-  const fb = document.getElementById("feedback-popup");
-  fb.className = "feedback-card";
-  fb.innerHTML = "";
-}
-
-function useFiftyFifty() {
-  if (gameState.powerups.fiftyFifty <= 0 || gameState.answeredCurrent) return;
-  const q = getActiveQuestion();
-  const wrongs = q.options.filter((o) => !o.isCorrect).slice(0, 2);
-  wrongs.forEach((o) => {
-    const btn = document.getElementById(`ans-tile-${o.id}`);
-    if (btn) btn.classList.add("eliminated");
-  });
-  gameState.powerups.fiftyFifty--;
-  soundFX.playPowerup();
-  updateHUD();
-}
-
-function useDoublePoints() {
-  if (gameState.powerups.doubleXp <= 0 || gameState.answeredCurrent || gameState.activeDoubleXp) return;
-  gameState.activeDoubleXp = true;
-  gameState.powerups.doubleXp--;
-  soundFX.playPowerup();
-  updateHUD();
-}
-
-function useTigerHint() {
-  if (gameState.powerups.hint <= 0 || gameState.answeredCurrent) return;
-  const q = getActiveQuestion();
-  gameState.powerups.hint--;
-  soundFX.playPowerup();
-  document.getElementById("mascot-speech").textContent = `Field Clue: ${q.clue}`;
-  updateHUD();
-}
-
-function speakCurrentQuestion() {
-  const q = getActiveQuestion();
-  if (!q) return;
-  soundFX.playTone(600, "sine", 0.08);
-  if ("speechSynthesis" in window) {
-    window.speechSynthesis.cancel();
-    const utter = new SpeechSynthesisUtterance(q.audioScript);
-    utter.rate = 0.98;
-    window.speechSynthesis.speak(utter);
+  if (gameState.autoVoice) {
+    narrateCurrentQuestion();
   }
 }
 
-function selectAnswer(optId) {
+function selectAnswer(selectedOpt, btnEl) {
   if (gameState.answeredCurrent) return;
   gameState.answeredCurrent = true;
 
   const q = getActiveQuestion();
-  const chosen = q.options.find((o) => o.id === optId);
-  const correct = q.options.find((o) => o.isCorrect);
-
-  q.options.forEach((opt) => {
-    const btn = document.getElementById(`ans-tile-${opt.id}`);
-    if (!btn) return;
-    btn.disabled = true;
-    if (opt.isCorrect) {
-      btn.classList.add("state-correct");
-    } else if (opt.id === optId && !opt.isCorrect) {
-      btn.classList.add("state-wrong");
+  const allBtns = document.querySelectorAll(".opt-card");
+  allBtns.forEach((b) => {
+    b.disabled = true;
+    const oid = b.dataset.optId;
+    const match = q.options.find((o) => o.id === oid);
+    if (match && match.isCorrect) {
+      b.classList.add("is-correct");
     }
   });
 
-  const fb = document.getElementById("feedback-popup");
+  const fbPanel = document.getElementById("feedback-panel");
+  const fbTitle = document.getElementById("fb-title");
+  const fbPts = document.getElementById("fb-pts");
+  const fbText = document.getElementById("fb-text");
 
-  if (chosen.isCorrect) {
-    soundFX.playCorrect();
-    if (eco3d) eco3d.triggerCelebration();
+  if (selectedOpt.isCorrect) {
+    playSound("correct");
+    if (ecoSim) ecoSim.triggerFeedbackPulse();
 
-    gameState.streak++;
-    if (gameState.streak > gameState.maxStreak) gameState.maxStreak = gameState.streak;
-
-    const pts = ((q.id === 10 ? 250 : 100) + gameState.streak * 15) * (gameState.activeDoubleXp ? 2 : 1);
-    gameState.xp += pts;
-
-    if (!gameState.isRedemptionPhase) {
-      gameState.initialCorrectCount++;
-    } else {
-      gameState.redeemedCorrectCount++;
+    gameState.streak += 1;
+    if (gameState.streak > gameState.bestStreak) {
+      gameState.bestStreak = gameState.streak;
     }
 
-    fb.className = "feedback-card visible correct";
-    fb.innerHTML = `
-      <div class="feedback-top">
-        <span style="color:var(--accent);">Verified · ${q.category}</span>
-        <span style="color:var(--text-primary);">+${pts} PTS</span>
-      </div>
-      <p class="feedback-text">${chosen.feedback}</p>
-      <button class="primary-btn" onclick="nextStage()">
-        Continue →
-      </button>
-    `;
+    const basePts = q.id === 10 ? 250 : 100;
+    const streakBonus = Math.min(gameState.streak * 15, 75);
+    const mult = gameState.doubleActive ? 2 : 1;
+    const earned = (basePts + streakBonus) * mult;
+    gameState.score += earned;
+
+    if (!gameState.isRedemptionMode) {
+      gameState.firstTryCorrect += 1;
+      gameState.completedSteps.add(gameState.currentIndex);
+    } else {
+      gameState.redemptionQueue.shift();
+    }
+
+    fbPanel.className = "feedback-banner visible correct";
+    fbTitle.textContent = "✓ Accurate Scientific Analysis";
+    fbTitle.style.color = "#059669";
+    fbPts.textContent = `+${earned} pts`;
+    fbPts.style.color = "#059669";
+    fbText.textContent = selectedOpt.feedback;
+
+    fireConfetti(28);
   } else {
-    soundFX.playGentleCoaching();
+    playSound("wrong");
+    btnEl.classList.add("is-wrong");
     gameState.streak = 0;
-    gameState.xp += 20;
 
-    if (!gameState.isRedemptionPhase) {
-      if (!gameState.redemptionQueue.includes(q.id)) {
-        gameState.redemptionQueue.push(q.id);
-      }
+    if (!gameState.isRedemptionMode) {
+      gameState.redemptionQueue.push(q);
+    } else {
+      // Re-queue at end of redemption list until mastered
+      const missed = gameState.redemptionQueue.shift();
+      gameState.redemptionQueue.push(missed);
     }
 
-    fb.className = "feedback-card visible review";
-    fb.innerHTML = `
-      <div class="feedback-top">
-        <span style="color:var(--amber);">Concept Review</span>
-        <span style="color:var(--text-secondary);">Queued for Redemption</span>
-      </div>
-      <p class="feedback-text" style="margin-bottom:8px;">${chosen.feedback}</p>
-      <p class="feedback-text" style="color:var(--text-primary);font-weight:500;">Correct Response (${correct.id}): ${correct.text}</p>
-      <button class="primary-btn" onclick="nextStage()">
-        Continue →
-      </button>
-    `;
+    fbPanel.className = "feedback-banner visible review";
+    fbTitle.textContent = "↻ Diagnostic Review (Queued for Mastery Retry)";
+    fbTitle.style.color = "#b45309";
+    fbPts.textContent = "+0 pts";
+    fbPts.style.color = "#b45309";
+    fbText.textContent = selectedOpt.feedback;
   }
 
-  updateHUD();
+  updateTopHUD();
 }
 
-function nextStage() {
-  if ("speechSynthesis" in window) window.speechSynthesis.cancel();
-
-  if (!gameState.isRedemptionPhase) {
-    if (gameState.currentIndex + 1 < QUESTION_BANK.length) {
-      gameState.currentIndex++;
-      renderCurrentLevel();
+function nextQuestion() {
+  playSound("click");
+  if (!gameState.isRedemptionMode) {
+    if (gameState.currentIndex < QUESTION_BANK.length - 1) {
+      gameState.currentIndex += 1;
+      loadCurrentQuestion();
     } else if (gameState.redemptionQueue.length > 0) {
-      gameState.isRedemptionPhase = true;
-      gameState.redemptionIndex = 0;
-      soundFX.playPowerup();
-      renderCurrentLevel();
+      gameState.isRedemptionMode = true;
+      loadCurrentQuestion();
     } else {
-      showVictoryScreen();
+      showSummaryScreen();
     }
   } else {
-    if (gameState.redemptionIndex + 1 < gameState.redemptionQueue.length) {
-      gameState.redemptionIndex++;
-      renderCurrentLevel();
+    if (gameState.redemptionQueue.length > 0) {
+      loadCurrentQuestion();
     } else {
-      showVictoryScreen();
+      showSummaryScreen();
     }
   }
 }
 
-function showVictoryScreen() {
-  soundFX.playVictory();
-  document.getElementById("arena-screen").style.display = "none";
-  document.getElementById("victory-screen").style.display = "block";
+function usePowerUp(type) {
+  if (gameState.answeredCurrent || gameState.powerUps[type] <= 0) return;
+  const q = getActiveQuestion();
+  playSound("click");
 
-  const total = QUESTION_BANK.length;
-  const prePct = Math.round((gameState.initialCorrectCount / total) * 100);
-  const postPct = Math.round(((gameState.initialCorrectCount + gameState.redeemedCorrectCount) / total) * 100);
+  if (type === "5050") {
+    const wrongBtns = Array.from(document.querySelectorAll(".opt-card")).filter((b) => {
+      const m = q.options.find((o) => o.id === b.dataset.optId);
+      return m && !m.isCorrect && !b.classList.contains("eliminated");
+    });
+    wrongBtns.slice(0, 2).forEach((b) => b.classList.add("eliminated"));
+    gameState.powerUps["5050"] -= 1;
+  } else if (type === "double") {
+    if (gameState.doubleActive) return;
+    gameState.doubleActive = true;
+    gameState.powerUps.double -= 1;
+  } else if (type === "clue") {
+    const clueBox = document.getElementById("clue-box");
+    if (clueBox) {
+      clueBox.style.display = "block";
+      clueBox.textContent = `💡 Field Clue: ${q.clue}`;
+    }
+    gameState.powerUps.clue -= 1;
+  }
+  updatePowerUpButtons();
+}
 
-  document.getElementById("vic-title").textContent = `${gameState.studentName} — Assessment Complete`;
-  document.getElementById("vic-xp").textContent = `${gameState.xp}`;
-  document.getElementById("vic-pre").textContent = `${prePct}%`;
-  document.getElementById("vic-post").textContent = `${postPct}%`;
+function updatePowerUpButtons() {
+  const b50 = document.getElementById("pu-5050");
+  const bDb = document.getElementById("pu-double");
+  const bCl = document.getElementById("pu-clue");
+
+  if (b50) {
+    b50.textContent = `⚡ 50/50 Filter (${gameState.powerUps["5050"]})`;
+    b50.disabled = gameState.powerUps["5050"] <= 0;
+  }
+  if (bDb) {
+    bDb.textContent = gameState.doubleActive
+      ? "⭐ 2× Active!"
+      : `⭐ 2× Points (${gameState.powerUps.double})`;
+    bDb.disabled = gameState.powerUps.double <= 0 || gameState.doubleActive;
+  }
+  if (bCl) {
+    bCl.textContent = `💡 Field Clue (${gameState.powerUps.clue})`;
+    bCl.disabled = gameState.powerUps.clue <= 0;
+  }
+}
+
+// Voice Narration (Web Speech API)
+function toggleAutoVoice() {
+  gameState.autoVoice = !gameState.autoVoice;
+  const btn = document.getElementById("btn-voice-toggle");
+  if (btn) {
+    btn.textContent = gameState.autoVoice ? "🔊 Voice: ON" : "🔇 Voice: OFF";
+  }
+  if (!gameState.autoVoice && "speechSynthesis" in window) {
+    window.speechSynthesis.cancel();
+  }
+}
+
+function narrateCurrentQuestion() {
+  if (!("speechSynthesis" in window)) return;
+  const q = getActiveQuestion();
+  if (!q) return;
+  window.speechSynthesis.cancel();
+  const utter = new SpeechSynthesisUtterance(q.audioScript || q.question);
+  utter.rate = 0.98;
+  utter.pitch = 1.0;
+  window.speechSynthesis.speak(utter);
+}
+
+// Summary Screen
+function showSummaryScreen() {
+  if ("speechSynthesis" in window) window.speechSynthesis.cancel();
+  document.getElementById("screen-quiz").style.display = "none";
+  document.getElementById("screen-summary").style.display = "block";
+
+  const acc = Math.round((gameState.firstTryCorrect / QUESTION_BANK.length) * 100);
+  document.getElementById("sum-score").textContent = gameState.score;
+  document.getElementById("sum-accuracy").textContent = `${acc}%`;
+  document.getElementById("sum-streak").textContent = gameState.bestStreak;
+  document.getElementById("sum-subtitle").textContent =
+    `Well done, ${gameState.studentName}! You have verified all 10 KSSR Year 6 Science ecosystem models.`;
+
+  fireConfetti(60);
+}
+
+// Minimalist Confetti Burst
+function fireConfetti(count = 35) {
+  const canvas = document.getElementById("confetti-canvas");
+  if (!canvas) return;
+  const ctx = canvas.getContext("2d");
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+
+  const colors = ["#10b981", "#4f46e5", "#38bdf8", "#f59e0b"];
+  const pieces = Array.from({ length: count }, () => ({
+    x: canvas.width * 0.5 + (Math.random() - 0.5) * 180,
+    y: canvas.height * 0.45,
+    vx: (Math.random() - 0.5) * 9,
+    vy: -Math.random() * 9 - 3,
+    size: 5 + Math.random() * 5,
+    color: colors[Math.floor(Math.random() * colors.length)],
+    alpha: 1
+  }));
+
+  function step() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    let alive = false;
+    pieces.forEach((p) => {
+      p.x += p.vx;
+      p.y += p.vy;
+      p.vy += 0.28;
+      p.alpha -= 0.018;
+      if (p.alpha > 0) {
+        alive = true;
+        ctx.globalAlpha = Math.max(0, p.alpha);
+        ctx.fillStyle = p.color;
+        ctx.fillRect(p.x, p.y, p.size, p.size);
+      }
+    });
+    if (alive) requestAnimationFrame(step);
+    else ctx.clearRect(0, 0, canvas.width, canvas.height);
+  }
+  step();
 }
