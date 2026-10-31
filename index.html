@@ -3,21 +3,28 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>EcoQuest — Interactive Ecosystem Lab (Year 6 Science)</title>
-  <link rel="stylesheet" href="styles.css?v=5" />
+  <title>EcoQuest 3D — Interactive Spatial Ecosystem Lab (Year 6 Science)</title>
+  <link rel="stylesheet" href="styles.css?v=6" />
 </head>
 <body>
+  <!-- Full-Viewport Interactive 3D WebGL Stage -->
+  <div id="webgl-stage"></div>
+
+  <!-- Real-Time Projected 3D Specimen Pins -->
+  <div id="pins-overlay"></div>
+
   <!-- Celebration Confetti Layer -->
   <canvas id="confetti-canvas"></canvas>
 
-  <!-- Minimalist Top Navigation Bar with Segmented Progress -->
-  <header class="top-header">
+  <!-- Minimalist Floating Spatial Navigation Bar -->
+  <header class="spatial-topbar">
     <button class="brand-btn" onclick="resetToHome()" title="Return to Home">
-      <div class="brand-icon">EQ</div>
-      <span class="brand-title">EcoQuest Lab</span>
+      <div class="brand-icon">3D</div>
+      <span class="brand-title">EcoQuest 3D</span>
+      <span class="brand-sub">KSSR Year 6 Science</span>
     </button>
 
-    <!-- Brilliant.org-style 10-step Segmented Progress Bar -->
+    <!-- 10-Step Segmented Progress Bar -->
     <div class="step-segments" id="step-segments" aria-label="Lesson progress"></div>
 
     <div class="header-right">
@@ -25,32 +32,33 @@
         <span id="hud-score">0 pts</span>
         <span class="streak-badge" id="hud-streak"></span>
       </div>
-      <button class="ghost-btn" id="btn-voice-toggle" onclick="toggleAutoVoice()">
+      <button class="glass-pill-btn" id="btn-voice-toggle" onclick="toggleAutoVoice()">
         🔊 Voice: ON
       </button>
     </div>
   </header>
 
-  <main class="page-shell">
+  <!-- Floating Spatial Glass UI Layer -->
+  <main class="ui-layer">
     <!-- ====================================================================
-         VIEW 1: MINIMALIST START SCREEN
+         VIEW 1: SPATIAL GLASS WELCOME CARD (Over Live 360° 3D Reef Diorama)
          ==================================================================== -->
-    <section id="screen-welcome">
-      <div class="start-card">
-        <span class="pill-tag">KSSR Year 6 Science · Unit 4</span>
+    <section id="screen-welcome" class="welcome-wrap">
+      <div class="spatial-card interactive-panel">
+        <span class="pill-tag">● Interactive 3D WebGL Lab</span>
         <h1 class="hero-h1">Interactions Among Living Things</h1>
         <p class="hero-p">
-          Test live ecosystem variables—symbiosis, competition, and biological control—across 10 interactive lab stages.
+          Rotate the live 3D ecosystem models 360°, manipulate real-time 3D variables, and master Symbiosis, Predation, and Competition.
         </p>
 
-        <div class="welcome-preview-box">
-          <div class="preview-stat">
-            <strong>10 Interactive Models</strong>
-            Drag sliders to test live species outcomes
+        <div class="feature-chips">
+          <div class="f-chip">
+            <strong>360° 3D Dioramas</strong>
+            Drag to orbit & zoom in 3D space
           </div>
-          <div class="preview-stat" style="text-align: right;">
-            <strong>[+ / +] · [+ / 0] · [+ / -]</strong>
-            Instant diagnostic feedback
+          <div class="f-chip">
+            <strong>Live 3D Controls</strong>
+            Slide to test 3D species interactions
           </div>
         </div>
 
@@ -58,109 +66,110 @@
         <input
           type="text"
           id="student-name"
-          class="modern-input"
+          class="spatial-input"
           placeholder="e.g., Aiman Hakimi (6 Bestari)"
           maxlength="36"
         />
 
         <button class="cta-btn" onclick="startExpedition()">
-          Start Interactive Lab →
+          Launch 3D Ecosystem Lab →
         </button>
       </div>
     </section>
 
     <!-- ====================================================================
-         VIEW 2: 2-COLUMN INTERACTIVE SIMULATION & QUESTION LAB
+         VIEW 2: SPATIAL 3D LAB (Left: 3D Control Dock, Right: Floating Card)
          ==================================================================== -->
-    <section id="screen-quiz" style="display: none;">
-      <div class="lab-grid">
-        <!-- Left Column: Interactive Ecosystem Simulation Stage -->
-        <div class="sim-stage-card">
-          <div class="sim-top-bar">
-            <span class="sim-badge" id="q-code-badge">01 · MUTUALISM (+ / +)</span>
-            <button class="sim-audio-btn" onclick="narrateCurrentQuestion()">
-              🔊 Listen
+    <section id="screen-quiz" class="lab-spatial-layout" style="display: none;">
+      <!-- Bottom-Left Floating 3D Camera & Simulation Dock -->
+      <div class="dock-3d interactive-panel">
+        <div class="dock-top">
+          <span class="orbit-hint">🖱️ Drag 3D Scene to Rotate · Scroll to Zoom</span>
+          <div class="cam-btns">
+            <button class="cam-btn" onclick="set3DCamera('front')">Front</button>
+            <button class="cam-btn" onclick="set3DCamera('top')">Top</button>
+            <button class="cam-btn" onclick="set3DCamera('closeup')">Zoom</button>
+            <button class="cam-btn active" id="btn-cam-orbit" onclick="set3DCamera('orbit')">
+              Auto-Orbit
             </button>
           </div>
-
-          <div class="sim-viewport">
-            <canvas id="sim-canvas"></canvas>
-          </div>
-
-          <!-- Interactive Simulation Variable Control -->
-          <div class="sim-control-box">
-            <div class="sim-control-header">
-              <span id="sim-control-label">Interactive Test: Adjust Ecosystem Variable</span>
-              <span id="sim-val-readout" style="color: #4f46e5;">80%</span>
-            </div>
-            <input
-              type="range"
-              id="sim-slider"
-              class="sim-slider"
-              min="0"
-              max="100"
-              value="80"
-              oninput="handleSimSlider(this.value)"
-            />
-            <div style="display: flex; justify-content: space-between; font-size: 0.72rem; color: #64748b; font-weight: 600;">
-              <span id="sim-min-label">Min</span>
-              <span id="sim-max-label">Max</span>
-            </div>
-          </div>
-
-          <!-- Species Outcome Pills -->
-          <div class="species-row" id="species-tags"></div>
         </div>
 
-        <!-- Right Column: Question & Minimalist Option Cards -->
-        <div class="question-panel">
-          <div class="observation-note" id="q-scenario"></div>
-
-          <h2 class="q-heading" id="q-prompt"></h2>
-
-          <!-- Support Tools -->
-          <div class="tools-bar">
-            <button class="tool-btn" id="pu-5050" onclick="usePowerUp('5050')">
-              ⚡ 50/50 Filter (2)
-            </button>
-            <button class="tool-btn" id="pu-double" onclick="usePowerUp('double')">
-              ⭐ 2× Points (2)
-            </button>
-            <button class="tool-btn" id="pu-clue" onclick="usePowerUp('clue')">
-              💡 Field Clue (2)
-            </button>
+        <div class="sim-slider-box">
+          <div class="sim-slider-header">
+            <span id="sim-control-label">3D Interactive Control</span>
+            <span id="sim-val-readout" style="color: #38bdf8;">80%</span>
           </div>
-
-          <!-- Clue Drawer -->
-          <div
-            id="clue-box"
-            style="display: none; margin-bottom: 14px; padding: 10px 14px; border-radius: 8px; background: #eef2ff; border: 1px solid #c7d2fe; font-size: 0.84rem; color: #3730a3; font-weight: 600;"
-          ></div>
-
-          <!-- Answer Options -->
-          <div class="options-list" id="options-list"></div>
-
-          <!-- Instant Diagnostic Feedback Banner -->
-          <div class="feedback-banner" id="feedback-panel">
-            <div class="fb-header">
-              <span id="fb-title"></span>
-              <span id="fb-pts"></span>
-            </div>
-            <p class="fb-body" id="fb-text"></p>
-            <button class="cta-btn" id="btn-next-q" onclick="nextQuestion()">
-              Continue →
-            </button>
+          <input
+            type="range"
+            id="sim-slider"
+            class="sim-slider"
+            min="0"
+            max="100"
+            value="80"
+            oninput="handleSimSlider(this.value)"
+          />
+          <div class="sim-slider-labels">
+            <span id="sim-min-label">Min</span>
+            <span id="sim-max-label">Max</span>
           </div>
+        </div>
+      </div>
+
+      <!-- Right Floating Spatial Question Panel -->
+      <div class="question-spatial-card interactive-panel">
+        <div class="q-top-row">
+          <span class="q-badge" id="q-code-badge">01 · MUTUALISM (+ / +)</span>
+          <button class="glass-pill-btn" onclick="narrateCurrentQuestion()">
+            🔊 Listen
+          </button>
+        </div>
+
+        <div class="observation-note" id="q-scenario"></div>
+
+        <h2 class="q-heading" id="q-prompt"></h2>
+
+        <!-- Support Tools -->
+        <div class="tools-bar">
+          <button class="tool-btn" id="pu-5050" onclick="usePowerUp('5050')">
+            ⚡ 50/50 (2)
+          </button>
+          <button class="tool-btn" id="pu-double" onclick="usePowerUp('double')">
+            ⭐ 2× Pts (2)
+          </button>
+          <button class="tool-btn" id="pu-clue" onclick="usePowerUp('clue')">
+            💡 Clue (2)
+          </button>
+        </div>
+
+        <div
+          id="clue-box"
+          style="display: none; margin-bottom: 12px; padding: 9px 12px; border-radius: 8px; background: rgba(56, 189, 248, 0.14); border: 1px solid rgba(56, 189, 248, 0.35); font-size: 0.8rem; color: #e0f2fe;"
+        ></div>
+
+        <!-- Tactile Answer Options -->
+        <div class="options-list" id="options-list"></div>
+
+        <!-- Instant Diagnostic Feedback Banner -->
+        <div class="feedback-banner" id="feedback-panel">
+          <div class="fb-header">
+            <span id="fb-title"></span>
+            <span id="fb-pts"></span>
+          </div>
+          <p class="fb-body" id="fb-text"></p>
+          <button class="cta-btn" id="btn-next-q" onclick="nextQuestion()">
+            Next 3D Stage →
+          </button>
         </div>
       </div>
     </section>
 
     <!-- ====================================================================
-         VIEW 3: COMPLETION SUMMARY CARD
+         VIEW 3: SPATIAL COMPLETION SUMMARY CARD
          ==================================================================== -->
-    <section id="screen-summary" style="display: none;">
-      <div class="start-card" style="max-width: 580px; text-align: center;">
-        <span class="pill-tag" id="sum-badge">Expedition Complete</span>
+    <section id="screen-summary" class="welcome-wrap" style="display: none;">
+      <div class="spatial-card interactive-panel" style="text-align: center;">
+        <span class="pill-tag" id="sum-badge">● 3D Expedition Complete</span>
         <h2 class="hero-h1" id="sum-title">Ecosystem Mastery Achieved</h2>
         <p class="hero-p" id="sum-subtitle"></p>
 
@@ -180,14 +189,15 @@
         </div>
 
         <button class="cta-btn" onclick="startExpedition()">
-          Play Again ↻
+          Replay 3D Expedition ↻
         </button>
       </div>
     </section>
   </main>
 
-  <script src="questions.js?v=5"></script>
-  <script src="scene3d.js?v=5"></script>
-  <script src="app.js?v=5"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="questions.js?v=6"></script>
+  <script src="scene3d.js?v=6"></script>
+  <script src="app.js?v=6"></script>
 </body>
 </html>

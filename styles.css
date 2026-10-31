@@ -1,36 +1,31 @@
 /* ==========================================================================
-   ECOQUEST — MODERN MINIMALIST INTERACTIVE STEM LAB (Brilliant.org Style)
-   Crisp Alabaster & White Surfaces, Segmented Progress, Interactive Sim Stage
+   ECOQUEST 3D — SPATIAL 3D DIORAMA & MINIMALIST GLASS UI (Spline / VisionOS)
+   Full-Viewport Interactive Three.js WebGL Stage + Floating Spatial HUD
    ========================================================================== */
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap');
 
 :root {
-  --bg-page: #f4f6fb;
-  --bg-card: #ffffff;
-  --bg-subtle: #f8fafc;
-  --bg-muted: #f1f5f9;
-  --border-light: #e2e8f0;
-  --border-hover: #cbd5e1;
-  --text-main: #0f172a;
-  --text-body: #334155;
-  --text-muted: #64748b;
+  --glass-bg: rgba(15, 23, 42, 0.72);
+  --glass-bg-strong: rgba(15, 23, 42, 0.86);
+  --glass-card-light: rgba(255, 255, 255, 0.07);
+  --glass-card-hover: rgba(255, 255, 255, 0.13);
+  --glass-border: rgba(255, 255, 255, 0.14);
+  --glass-border-bright: rgba(255, 255, 255, 0.28);
+  --text-primary: #f8fafc;
+  --text-secondary: #cbd5e1;
+  --text-muted: #94a3b8;
   --emerald: #10b981;
-  --emerald-dark: #059669;
-  --emerald-soft: #ecfdf5;
-  --indigo: #4f46e5;
-  --indigo-soft: #eef2ff;
+  --emerald-glow: rgba(16, 185, 129, 0.25);
+  --indigo: #6366f1;
+  --cyan: #38bdf8;
   --amber: #f59e0b;
-  --amber-soft: #fffbeb;
   --rose: #f43f5e;
-  --rose-soft: #fff1f2;
-  --shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.04);
-  --shadow-md: 0 12px 32px -8px rgba(15, 23, 42, 0.07), 0 2px 6px rgba(15, 23, 42, 0.03);
-  --shadow-lg: 0 20px 48px -12px rgba(15, 23, 42, 0.12);
-  --radius-xl: 24px;
-  --radius-lg: 16px;
-  --radius-md: 12px;
-  --radius-sm: 8px;
+  --shadow-spatial: 0 24px 60px rgba(2, 6, 23, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.18);
+  --radius-2xl: 24px;
+  --radius-xl: 18px;
+  --radius-lg: 14px;
+  --radius-md: 10px;
 }
 
 * {
@@ -39,13 +34,31 @@
   padding: 0;
 }
 
-body {
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow-x: hidden;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-  background-color: var(--bg-page);
-  color: var(--text-main);
-  min-height: 100vh;
-  line-height: 1.5;
+  background: #070b14;
+  color: var(--text-primary);
   -webkit-font-smoothing: antialiased;
+  user-select: none;
+}
+
+/* ==========================================================================
+   FULL-SCREEN INTERACTIVE 3D WEBGL STAGE
+   ========================================================================== */
+#webgl-stage {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 1;
+  cursor: grab;
+}
+
+#webgl-stage:active {
+  cursor: grabbing;
 }
 
 #confetti-canvas {
@@ -58,84 +71,153 @@ body {
 }
 
 /* ==========================================================================
-   MINIMALIST TOP HEADER WITH SEGMENTED PROGRESS BAR
+   3D PROJECTED FLOATING CALLOUT PINS (Attached to 3D Models in Real Time)
    ========================================================================== */
-.top-header {
-  height: 68px;
-  background: rgba(255, 255, 255, 0.9);
-  backdrop-filter: blur(16px);
-  border-bottom: 1px solid var(--border-light);
-  padding: 0 28px;
+#pins-overlay {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 10;
+  overflow: hidden;
+}
+
+.pin-3d {
+  position: absolute;
+  transform: translate(-50%, -100%);
+  background: rgba(15, 23, 42, 0.82);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 999px;
+  padding: 6px 13px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  pointer-events: auto;
+  cursor: pointer;
+  transition: border-color 0.2s ease, transform 0.15s ease;
+  white-space: nowrap;
+}
+
+.pin-3d:hover {
+  transform: translate(-50%, -105%) scale(1.05);
+  border-color: var(--cyan);
+}
+
+.pin-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  box-shadow: 0 0 10px currentColor;
+}
+
+.pin-name {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.pin-effect {
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding-left: 6px;
+  border-left: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+/* ==========================================================================
+   TOP FLOATING SPATIAL NAVIGATION BAR
+   ========================================================================== */
+.spatial-topbar {
+  position: fixed;
+  top: 16px;
+  left: 20px;
+  right: 20px;
+  height: 58px;
+  background: var(--glass-bg);
+  backdrop-filter: blur(22px);
+  -webkit-backdrop-filter: blur(22px);
+  border: 1px solid var(--glass-border);
+  border-radius: 999px;
+  padding: 0 20px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 20px;
-  position: sticky;
-  top: 0;
+  gap: 16px;
   z-index: 100;
+  box-shadow: var(--shadow-spatial);
 }
 
 .brand-btn {
   display: flex;
   align-items: center;
   gap: 10px;
-  cursor: pointer;
   background: none;
   border: none;
-  text-align: left;
+  color: var(--text-primary);
+  cursor: pointer;
 }
 
 .brand-icon {
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
-  background: var(--text-main);
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--emerald), var(--indigo));
   color: #ffffff;
   font-family: 'Plus Jakarta Sans', sans-serif;
   font-weight: 800;
-  font-size: 0.9rem;
+  font-size: 0.82rem;
   display: flex;
   align-items: center;
   justify-content: center;
+  box-shadow: 0 0 16px rgba(16, 185, 129, 0.4);
 }
 
 .brand-title {
   font-family: 'Plus Jakarta Sans', sans-serif;
   font-weight: 800;
-  font-size: 1.02rem;
-  color: var(--text-main);
+  font-size: 0.96rem;
   letter-spacing: -0.02em;
 }
 
-/* Segmented 10-Step Progress Dots (Brilliant.org Style) */
+.brand-sub {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  font-weight: 500;
+  margin-left: 4px;
+}
+
+/* Segmented 10-Step Progress Dots */
 .step-segments {
   display: flex;
   align-items: center;
   gap: 6px;
   flex: 1;
-  max-width: 420px;
+  max-width: 380px;
 }
 
-@media (max-width: 720px) {
-  .step-segments { display: none; }
-  .top-header { padding: 0 16px; }
+@media (max-width: 820px) {
+  .step-segments, .brand-sub { display: none; }
 }
 
 .step-dot {
-  height: 8px;
+  height: 7px;
   flex: 1;
   border-radius: 999px;
-  background: #e2e8f0;
+  background: rgba(255, 255, 255, 0.16);
   transition: all 0.3s ease;
 }
 
 .step-dot.done {
   background: var(--emerald);
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
 }
 
 .step-dot.current {
-  background: var(--indigo);
-  transform: scaleY(1.25);
+  background: var(--cyan);
+  transform: scaleY(1.35);
+  box-shadow: 0 0 12px rgba(56, 189, 248, 0.7);
 }
 
 .header-right {
@@ -145,14 +227,14 @@ body {
 }
 
 .score-pill {
-  background: var(--bg-muted);
-  border: 1px solid var(--border-light);
-  padding: 6px 12px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--glass-border);
+  padding: 6px 14px;
   border-radius: 999px;
   font-family: 'Plus Jakarta Sans', sans-serif;
   font-size: 0.82rem;
   font-weight: 700;
-  color: var(--text-main);
+  color: #ffffff;
   display: flex;
   align-items: center;
   gap: 6px;
@@ -163,50 +245,80 @@ body {
   font-weight: 800;
 }
 
-.ghost-btn {
-  background: var(--bg-card);
-  border: 1px solid var(--border-light);
-  color: var(--text-body);
-  padding: 7px 12px;
-  border-radius: var(--radius-sm);
-  font-size: 0.8rem;
+.glass-pill-btn {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--glass-border);
+  color: var(--text-secondary);
+  padding: 7px 13px;
+  border-radius: 999px;
+  font-size: 0.78rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.15s ease;
 }
 
-.ghost-btn:hover {
-  border-color: var(--border-hover);
-  background: var(--bg-subtle);
+.glass-pill-btn:hover {
+  background: rgba(255, 255, 255, 0.16);
+  color: #ffffff;
+  border-color: var(--glass-border-bright);
 }
 
 /* ==========================================================================
-   MAIN CONTAINER
+   FLOATING UI LAYER (Overlaying the 3D World)
    ========================================================================== */
-.page-shell {
-  max-width: 1140px;
+.ui-layer {
+  position: relative;
+  z-index: 20;
+  min-height: 100vh;
+  padding: 90px 24px 28px;
+  pointer-events: none; /* Let clicks pass through to 3D OrbitControls! */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.interactive-panel {
+  pointer-events: auto; /* Re-enable clicks inside glass cards */
+}
+
+/* ==========================================================================
+   VIEW 1: SPATIAL GLASS WELCOME CARD (Over Live 3D Diorama)
+   ========================================================================== */
+.welcome-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  max-width: 1240px;
+  width: 100%;
   margin: 0 auto;
-  padding: 32px 20px 64px;
 }
 
-/* ==========================================================================
-   WELCOME / START CARD
-   ========================================================================== */
-.start-card {
-  max-width: 540px;
-  margin: 24px auto 0;
-  background: var(--bg-card);
-  border: 1px solid var(--border-light);
-  border-radius: var(--radius-xl);
-  padding: 40px;
-  box-shadow: var(--shadow-md);
+@media (max-width: 900px) {
+  .welcome-wrap {
+    justify-content: center;
+  }
+}
+
+.spatial-card {
+  width: 100%;
+  max-width: 460px;
+  background: var(--glass-bg);
+  backdrop-filter: blur(26px);
+  -webkit-backdrop-filter: blur(26px);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-2xl);
+  padding: 34px;
+  box-shadow: var(--shadow-spatial);
 }
 
 .pill-tag {
-  display: inline-block;
-  background: var(--indigo-soft);
-  color: var(--indigo);
-  font-size: 0.74rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(56, 189, 248, 0.14);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  color: var(--cyan);
+  font-size: 0.72rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.06em;
@@ -217,350 +329,345 @@ body {
 
 .hero-h1 {
   font-family: 'Plus Jakarta Sans', sans-serif;
-  font-size: 1.9rem;
+  font-size: 1.85rem;
   font-weight: 800;
   letter-spacing: -0.03em;
-  line-height: 1.2;
+  line-height: 1.18;
   margin-bottom: 10px;
-  color: var(--text-main);
+  color: #ffffff;
 }
 
 .hero-p {
-  font-size: 0.95rem;
-  color: var(--text-muted);
-  margin-bottom: 24px;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  line-height: 1.55;
+  margin-bottom: 20px;
 }
 
-/* Interactive Mini Preview Banner inside Welcome Card */
-.welcome-preview-box {
-  background: linear-gradient(135deg, #0f172a, #1e293b);
-  border-radius: var(--radius-lg);
-  padding: 18px 20px;
-  color: #ffffff;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  margin-bottom: 24px;
+.feature-chips {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 22px;
 }
 
-.preview-stat {
-  font-size: 0.8rem;
-  color: #94a3b8;
+.f-chip {
+  background: var(--glass-card-light);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-md);
+  padding: 10px 12px;
+  font-size: 0.76rem;
+  color: var(--text-secondary);
 }
 
-.preview-stat strong {
+.f-chip strong {
   display: block;
-  font-family: 'Plus Jakarta Sans', sans-serif;
-  font-size: 1.05rem;
   color: #ffffff;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 0.84rem;
   margin-bottom: 2px;
 }
 
 .input-label {
   display: block;
-  font-size: 0.78rem;
-  font-weight: 700;
-  color: var(--text-body);
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: var(--text-secondary);
   margin-bottom: 6px;
 }
 
-.modern-input {
+.spatial-input {
   width: 100%;
   padding: 12px 14px;
-  border: 1.5px solid var(--border-light);
+  background: rgba(15, 23, 42, 0.65);
+  border: 1px solid var(--glass-border);
   border-radius: var(--radius-md);
-  font-size: 0.95rem;
+  color: #ffffff;
+  font-size: 0.92rem;
   font-family: inherit;
-  color: var(--text-main);
-  background: var(--bg-subtle);
-  margin-bottom: 20px;
-  transition: border-color 0.15s ease, background 0.15s ease;
+  margin-bottom: 18px;
+  transition: border-color 0.2s ease;
 }
 
-.modern-input:focus {
+.spatial-input:focus {
   outline: none;
-  border-color: var(--indigo);
-  background: #ffffff;
+  border-color: var(--cyan);
 }
 
 .cta-btn {
   width: 100%;
-  padding: 14px 22px;
+  padding: 14px 20px;
   border: none;
   border-radius: var(--radius-md);
-  background: var(--text-main);
+  background: linear-gradient(135deg, #10b981, #059669);
   color: #ffffff;
   font-family: 'Plus Jakarta Sans', sans-serif;
-  font-size: 0.96rem;
+  font-size: 0.94rem;
   font-weight: 700;
   cursor: pointer;
-  transition: transform 0.12s ease, background 0.15s ease, box-shadow 0.15s ease;
-  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.15);
+  box-shadow: 0 8px 24px rgba(16, 185, 129, 0.32);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 
 .cta-btn:hover {
-  background: #1e293b;
   transform: translateY(-1px);
-  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.22);
-}
-
-.cta-btn:active {
-  transform: translateY(0);
+  box-shadow: 0 12px 28px rgba(16, 185, 129, 0.45);
 }
 
 /* ==========================================================================
-   2-COLUMN INTERACTIVE LAB LAYOUT
+   VIEW 2: SPATIAL 3D LAB LAYOUT (Left: Open 3D Stage + Bottom Dock, Right: Card)
    ========================================================================== */
-.lab-grid {
-  display: grid;
-  grid-template-columns: 1.12fr 1fr;
+.lab-spatial-layout {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  width: 100%;
+  max-width: 1320px;
+  margin: 0 auto;
+  min-height: calc(100vh - 125px);
   gap: 24px;
-  align-items: start;
 }
 
-@media (max-width: 920px) {
-  .lab-grid {
-    grid-template-columns: 1fr;
+@media (max-width: 960px) {
+  .lab-spatial-layout {
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: flex-end;
+    padding-top: 260px;
   }
 }
 
-/* Left: Interactive Simulation & 3D Perspective Stage */
-.sim-stage-card {
-  background: var(--bg-card);
-  border: 1px solid var(--border-light);
+/* Bottom-Left Floating 3D Control Dock */
+.dock-3d {
+  width: 100%;
+  max-width: 480px;
+  background: var(--glass-bg);
+  backdrop-filter: blur(22px);
+  -webkit-backdrop-filter: blur(22px);
+  border: 1px solid var(--glass-border);
   border-radius: var(--radius-xl);
-  padding: 20px;
-  box-shadow: var(--shadow-md);
-  transition: transform 0.2s ease;
+  padding: 16px 20px;
+  box-shadow: var(--shadow-spatial);
 }
 
-.sim-top-bar {
+.dock-top {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 14px;
-}
-
-.sim-badge {
-  font-family: 'Plus Jakarta Sans', sans-serif;
-  font-size: 0.75rem;
-  font-weight: 700;
-  color: var(--indigo);
-  background: var(--indigo-soft);
-  padding: 4px 10px;
-  border-radius: 6px;
-}
-
-.sim-audio-btn {
-  background: var(--bg-muted);
-  border: 1px solid var(--border-light);
-  color: var(--text-body);
-  padding: 5px 11px;
-  border-radius: 6px;
-  font-size: 0.76rem;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.sim-audio-btn:hover {
-  background: #e2e8f0;
-}
-
-/* Interactive Canvas Viewport */
-.sim-viewport {
-  position: relative;
-  width: 100%;
-  height: 320px;
-  border-radius: var(--radius-lg);
-  overflow: hidden;
-  background: #0f172a;
-  border: 1px solid #1e293b;
-  margin-bottom: 14px;
-}
-
-#sim-canvas {
-  width: 100%;
-  height: 100%;
-  display: block;
-  cursor: pointer;
-}
-
-/* Interactive Control Bar inside Stage (Slider / Simulation Toggle) */
-.sim-control-box {
-  background: var(--bg-subtle);
-  border: 1px solid var(--border-light);
-  border-radius: var(--radius-md);
-  padding: 12px 16px;
-  display: flex;
-  flex-direction: column;
   gap: 8px;
   margin-bottom: 12px;
+  flex-wrap: wrap;
 }
 
-.sim-control-header {
+.orbit-hint {
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: var(--cyan);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.cam-btns {
+  display: flex;
+  gap: 6px;
+}
+
+.cam-btn {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--glass-border);
+  color: var(--text-secondary);
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.cam-btn:hover, .cam-btn.active {
+  background: rgba(56, 189, 248, 0.18);
+  border-color: var(--cyan);
+  color: #ffffff;
+}
+
+/* Interactive 3D Variable Slider */
+.sim-slider-box {
+  background: rgba(2, 6, 23, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius-md);
+  padding: 10px 14px;
+}
+
+.sim-slider-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 0.8rem;
+  font-size: 0.78rem;
   font-weight: 700;
-  color: var(--text-main);
+  color: #ffffff;
+  margin-bottom: 6px;
 }
 
 .sim-slider {
   width: 100%;
-  accent-color: var(--indigo);
+  accent-color: var(--emerald);
   height: 6px;
   cursor: pointer;
 }
 
-/* Species Outcome Pills */
-.species-row {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  gap: 8px;
-}
-
-.species-pill {
-  background: var(--bg-subtle);
-  border: 1px solid var(--border-light);
-  border-radius: var(--radius-sm);
-  padding: 8px 12px;
-}
-
-.species-name {
-  font-size: 0.74rem;
+.sim-slider-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.7rem;
   color: var(--text-muted);
-  font-weight: 600;
+  margin-top: 4px;
 }
 
-.species-effect {
+/* Right Floating Question Panel */
+.question-spatial-card {
+  width: 100%;
+  max-width: 470px;
+  background: var(--glass-bg-strong);
+  backdrop-filter: blur(28px);
+  -webkit-backdrop-filter: blur(28px);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-2xl);
+  padding: 26px;
+  box-shadow: var(--shadow-spatial);
+  align-self: center;
+}
+
+.q-top-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.q-badge {
   font-family: 'Plus Jakarta Sans', sans-serif;
-  font-size: 0.84rem;
+  font-size: 0.73rem;
   font-weight: 700;
-  margin-top: 2px;
-}
-
-/* Right: Question & Tactile Minimalist Option Cards */
-.question-panel {
-  background: var(--bg-card);
-  border: 1px solid var(--border-light);
-  border-radius: var(--radius-xl);
-  padding: 28px;
-  box-shadow: var(--shadow-md);
+  color: var(--emerald);
+  background: rgba(16, 185, 129, 0.14);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  padding: 4px 10px;
+  border-radius: 6px;
 }
 
 .observation-note {
-  font-size: 0.88rem;
-  color: var(--text-body);
-  background: var(--bg-subtle);
-  border-left: 3px solid var(--indigo);
-  padding: 10px 14px;
-  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
-  margin-bottom: 16px;
+  font-size: 0.83rem;
+  color: var(--text-secondary);
+  background: rgba(255, 255, 255, 0.05);
+  border-left: 3px solid var(--cyan);
+  padding: 9px 12px;
+  border-radius: 0 8px 8px 0;
+  margin-bottom: 14px;
+  line-height: 1.45;
 }
 
-/* Support Tools Strip (50/50, 2x, Hint) */
+.q-heading {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 1.12rem;
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: -0.015em;
+  line-height: 1.35;
+  margin-bottom: 14px;
+}
+
+/* Support Tools Strip */
 .tools-bar {
   display: flex;
   gap: 8px;
-  margin-bottom: 18px;
+  margin-bottom: 14px;
 }
 
 .tool-btn {
   flex: 1;
-  background: var(--bg-subtle);
-  border: 1px solid var(--border-light);
-  color: var(--text-body);
-  padding: 8px 10px;
-  border-radius: var(--radius-sm);
-  font-size: 0.76rem;
+  background: var(--glass-card-light);
+  border: 1px solid var(--glass-border);
+  color: var(--text-secondary);
+  padding: 7px 8px;
+  border-radius: 8px;
+  font-size: 0.73rem;
   font-weight: 700;
   cursor: pointer;
   transition: all 0.15s ease;
 }
 
 .tool-btn:hover:not(:disabled) {
-  border-color: var(--indigo);
-  color: var(--indigo);
-  background: var(--indigo-soft);
+  background: var(--glass-card-hover);
+  border-color: var(--cyan);
+  color: #ffffff;
 }
 
 .tool-btn:disabled {
-  opacity: 0.4;
+  opacity: 0.35;
   cursor: not-allowed;
 }
 
-.q-heading {
-  font-family: 'Plus Jakarta Sans', sans-serif;
-  font-size: 1.2rem;
-  font-weight: 800;
-  color: var(--text-main);
-  letter-spacing: -0.02em;
-  line-height: 1.35;
-  margin-bottom: 18px;
-}
-
+/* Minimalist Spatial Option Cards */
 .options-list {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 9px;
 }
 
 .opt-card {
   width: 100%;
   text-align: left;
-  background: var(--bg-card);
-  border: 1.5px solid var(--border-light);
+  background: var(--glass-card-light);
+  border: 1px solid var(--glass-border);
   border-radius: var(--radius-md);
-  padding: 14px 16px;
-  color: var(--text-main);
+  padding: 12px 14px;
+  color: var(--text-primary);
   font-family: inherit;
-  font-size: 0.92rem;
+  font-size: 0.87rem;
   font-weight: 500;
+  line-height: 1.4;
   cursor: pointer;
   display: flex;
   align-items: flex-start;
-  gap: 12px;
+  gap: 11px;
   transition: all 0.16s ease;
-  box-shadow: var(--shadow-sm);
 }
 
 .opt-card:hover:not(:disabled) {
-  border-color: var(--indigo);
-  background: #fafbff;
-  transform: translateY(-1px);
+  background: var(--glass-card-hover);
+  border-color: var(--glass-border-bright);
+  transform: translateX(3px);
 }
 
 .opt-key {
-  min-width: 26px;
-  height: 26px;
-  border-radius: 7px;
-  background: var(--bg-muted);
-  color: var(--text-body);
+  min-width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
   font-family: 'Plus Jakarta Sans', sans-serif;
-  font-size: 0.78rem;
+  font-size: 0.75rem;
   font-weight: 800;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.15s ease;
 }
 
 .opt-card:hover:not(:disabled) .opt-key {
-  background: var(--indigo);
-  color: #ffffff;
+  background: var(--cyan);
+  color: #0f172a;
 }
 
 .opt-card.eliminated {
-  opacity: 0.3;
+  opacity: 0.25;
   pointer-events: none;
   text-decoration: line-through;
 }
 
 .opt-card.is-correct {
   border-color: var(--emerald);
-  background: var(--emerald-soft);
+  background: rgba(16, 185, 129, 0.18);
 }
 
 .opt-card.is-correct .opt-key {
@@ -570,7 +677,7 @@ body {
 
 .opt-card.is-wrong {
   border-color: var(--rose);
-  background: var(--rose-soft);
+  background: rgba(244, 63, 94, 0.18);
 }
 
 .opt-card.is-wrong .opt-key {
@@ -578,10 +685,10 @@ body {
   color: #ffffff;
 }
 
-/* Feedback Banner */
+/* Instant Feedback Banner */
 .feedback-banner {
-  margin-top: 18px;
-  padding: 18px;
+  margin-top: 14px;
+  padding: 14px;
   border-radius: var(--radius-md);
   display: none;
 }
@@ -591,13 +698,13 @@ body {
 }
 
 .feedback-banner.correct {
-  background: var(--emerald-soft);
-  border: 1.5px solid #a7f3d0;
+  background: rgba(16, 185, 129, 0.16);
+  border: 1px solid rgba(16, 185, 129, 0.4);
 }
 
 .feedback-banner.review {
-  background: var(--amber-soft);
-  border: 1.5px solid #fde68a;
+  background: rgba(245, 158, 11, 0.16);
+  border: 1px solid rgba(245, 158, 11, 0.4);
 }
 
 .fb-header {
@@ -605,43 +712,43 @@ body {
   justify-content: space-between;
   align-items: center;
   font-family: 'Plus Jakarta Sans', sans-serif;
-  font-size: 0.85rem;
+  font-size: 0.82rem;
   font-weight: 800;
-  margin-bottom: 6px;
+  margin-bottom: 5px;
 }
 
 .fb-body {
-  font-size: 0.88rem;
-  color: var(--text-body);
-  margin-bottom: 14px;
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  line-height: 1.45;
+  margin-bottom: 12px;
 }
 
 /* Summary KPIs */
 .kpi-row {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 12px;
-  margin: 24px 0;
+  gap: 10px;
+  margin: 20px 0;
 }
 
 .kpi-tile {
-  background: var(--bg-subtle);
-  border: 1px solid var(--border-light);
+  background: var(--glass-card-light);
+  border: 1px solid var(--glass-border);
   border-radius: var(--radius-md);
-  padding: 18px 12px;
+  padding: 16px 10px;
   text-align: center;
 }
 
 .kpi-val {
   font-family: 'Plus Jakarta Sans', sans-serif;
-  font-size: 1.75rem;
+  font-size: 1.6rem;
   font-weight: 800;
-  color: var(--text-main);
+  color: #ffffff;
 }
 
 .kpi-lbl {
-  font-size: 0.76rem;
-  font-weight: 600;
+  font-size: 0.72rem;
   color: var(--text-muted);
   margin-top: 4px;
 }

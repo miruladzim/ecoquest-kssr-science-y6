@@ -1,942 +1,1015 @@
 // ============================================================================
-// ECOQUEST — INTERACTIVE 2.5D ECOSYSTEM SIMULATION ENGINE (Brilliant.org Style)
-// Crisp High-DPI Vector Biological Simulations with Live Slider & Pointer Control
+// ECOQUEST 3D — INTERACTIVE SPATIAL WEBGL DIORAMA ENGINE (Three.js)
+// Full-Screen 360° Orbit Camera, Projected 3D Pins & Slider-Driven 3D Models
 // ============================================================================
 
 class EcoSimEngine {
-  constructor(canvasId) {
-    this.canvas = document.getElementById(canvasId);
-    if (!this.canvas) return;
-    this.ctx = this.canvas.getContext("2d");
+  constructor(containerId) {
+    this.container = document.getElementById(containerId);
+    if (!this.container || typeof THREE === "undefined") return;
+
     this.currentStage = 1;
-    this.simValue = 80; // 0 to 100
+    this.simValue = 80;
     this.targetSimValue = 80;
-    this.time = 0;
-    this.isDragging = false;
-    this.pulseEffect = 0; // Triggered on answer check
+    this.clock = new THREE.Clock();
+    this.actors = {};
+    this.pins = [];
+    this.isQuizLayout = false;
 
-    // Ambient particles for water/sunlight/nutrients
-    this.particles = Array.from({ length: 28 }, (_, i) => ({
-      x: Math.random(),
-      y: Math.random(),
-      r: 1.5 + Math.random() * 2.5,
-      speedX: 0.0008 + Math.random() * 0.0018,
-      speedY: (Math.random() - 0.5) * 0.001,
-      phase: i * 0.7
-    }));
+    // 360° Orbit Camera spherical state
+    this.camState = {
+      theta: 0.35,
+      phi: 1.15,
+      radius: 10.5,
+      targetTheta: 0.35,
+      targetPhi: 1.15,
+      targetRadius: 10.5,
+      autoOrbit: true,
+      isDragging: false,
+      lastX: 0,
+      lastY: 0,
+      lookAtX: 0,
+      targetLookAtX: 0
+    };
 
-    this.resize();
-    window.addEventListener("resize", () => this.resize());
-    this.bindCanvasEvents();
+    this.initThree();
+    this.initLights();
+    this.initAmbientParticles();
+    this.bindInteraction();
+    this.buildStage(1, 80);
     this.animate();
   }
 
-  resize() {
-    if (!this.canvas) return;
-    const rect = this.canvas.parentElement.getBoundingClientRect();
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
-    this.width = rect.width || 520;
-    this.height = rect.height || 320;
-    this.canvas.width = this.width * dpr;
-    this.canvas.height = this.height * dpr;
-    this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  initThree() {
+    const w = window.innerWidth;
+    const h = window.innerHeight;
+
+    this.scene = new THREE.Scene();
+    this.scene.fog = new THREE.FogExp2(0x070b14, 0.032);
+
+    this.camera = new THREE.PerspectiveCamera(42, w / h, 0.1, 120);
+
+    this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    this.renderer.setSize(w, h);
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    this.renderer.shadowMap.enabled = true;
+    this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    this.renderer.toneMappingExposure = 1.15;
+
+    this.container.innerHTML = "";
+    this.container.appendChild(this.renderer.domElement);
+
+    // Master Diorama Group
+    this.dioramaGroup = new THREE.Group();
+    this.scene.add(this.dioramaGroup);
+
+    window.addEventListener("resize", () => this.resize());
   }
 
-  bindCanvasEvents() {
-    const updateFromPointer = (clientX) => {
-      const rect = this.canvas.getBoundingClientRect();
-      const relX = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
-      const pct = Math.round(relX * 100);
-      this.setSimValue(pct, true);
-    };
+  initLights() {
+    const hemi = new THREE.HemisphereLight(0xbae6fd, 0x0f172a, 0.85);
+    this.scene.add(hemi);
 
-    this.canvas.addEventListener("pointerdown", (e) => {
-      this.isDragging = true;
-      updateFromPointer(e.clientX);
+    this.keyLight = new THREE.DirectionalLight(0xffffff, 1.5);
+    this.keyLight.position.set(7, 13, 8);
+    this.keyLight.castShadow = true;
+    this.keyLight.shadow.mapSize.width = 1024;
+    this.keyLight.shadow.mapSize.height = 1024;
+    this.scene.add(this.keyLight);
+
+    this.rimLight = new THREE.PointLight(0x38bdf8, 1.8, 26);
+    this.rimLight.position.set(-7, 5, -6);
+    this.scene.add(this.rimLight);
+
+    this.accentLight = new THREE.PointLight(0x10b981, 1.4, 22);
+    this.accentLight.position.set(5, -3, 5);
+    this.scene.add(this.accentLight);
+  }
+
+  initAmbientParticles() {
+    const count = 140;
+    const geo = new THREE.BufferGeometry();
+    const pos = new Float32Array(count * 3);
+    for (let i = 0; i < count; i++) {
+      pos[i * 3] = (Math.random() - 0.5) * 26;
+      pos[i * 3 + 1] = (Math.random() - 0.2) * 14;
+      pos[i * 3 + 2] = (Math.random() - 0.5) * 20;
+    }
+    geo.setAttribute("position", new THREE.BufferAttribute(pos, 3));
+    const mat = new THREE.PointsMaterial({
+      color: 0x38bdf8,
+      size: 0.11,
+      transparent: true,
+      opacity: 0.65
+    });
+    this.particleSystem = new THREE.Points(geo, mat);
+    this.scene.add(this.particleSystem);
+  }
+
+  bindInteraction() {
+    const dom = this.renderer.domElement;
+
+    dom.addEventListener("pointerdown", (e) => {
+      this.camState.isDragging = true;
+      this.camState.lastX = e.clientX;
+      this.camState.lastY = e.clientY;
     });
 
     window.addEventListener("pointermove", (e) => {
-      if (!this.isDragging) return;
-      updateFromPointer(e.clientX);
+      if (!this.camState.isDragging) return;
+      const dx = e.clientX - this.camState.lastX;
+      const dy = e.clientY - this.camState.lastY;
+      this.camState.lastX = e.clientX;
+      this.camState.lastY = e.clientY;
+
+      this.camState.targetTheta -= dx * 0.007;
+      this.camState.targetPhi = Math.max(
+        0.45,
+        Math.min(1.48, this.camState.targetPhi - dy * 0.006)
+      );
     });
 
     window.addEventListener("pointerup", () => {
-      this.isDragging = false;
+      this.camState.isDragging = false;
     });
+
+    dom.addEventListener(
+      "wheel",
+      (e) => {
+        e.preventDefault();
+        this.camState.targetRadius = Math.max(
+          6.5,
+          Math.min(15.5, this.camState.targetRadius + e.deltaY * 0.005)
+        );
+      },
+      { passive: false }
+    );
   }
 
-  setSimValue(val, syncSlider = false) {
-    this.targetSimValue = Math.max(0, Math.min(100, Number(val)));
-    if (syncSlider) {
-      const slider = document.getElementById("sim-slider");
-      const valLabel = document.getElementById("sim-val-readout");
-      if (slider) slider.value = this.targetSimValue;
-      if (valLabel) valLabel.textContent = `${this.targetSimValue}%`;
+  setLayoutMode(isQuiz) {
+    this.isQuizLayout = isQuiz;
+    this.updateCenterOffset();
+  }
+
+  updateCenterOffset() {
+    // Shift camera target right so the 3D diorama sits cleanly on the left 58% of desktop screen
+    if (this.isQuizLayout && window.innerWidth > 960) {
+      this.camState.targetLookAtX = 2.15;
+    } else {
+      this.camState.targetLookAtX = 0;
     }
   }
 
-  buildStage(stageId, defaultVal = 80) {
-    this.currentStage = stageId;
-    this.targetSimValue = defaultVal;
-    this.simValue = defaultVal;
-    this.resize();
+  setCameraPreset(preset) {
+    if (preset === "front") {
+      this.camState.targetTheta = 0.25;
+      this.camState.targetPhi = 1.15;
+      this.camState.targetRadius = 10.2;
+    } else if (preset === "top") {
+      this.camState.targetTheta = 0.0;
+      this.camState.targetPhi = 0.55;
+      this.camState.targetRadius = 11.5;
+    } else if (preset === "closeup") {
+      this.camState.targetPhi = 1.2;
+      this.camState.targetRadius = 7.4;
+    } else if (preset === "orbit") {
+      this.camState.autoOrbit = !this.camState.autoOrbit;
+      const btn = document.getElementById("btn-cam-orbit");
+      if (btn) btn.classList.toggle("active", this.camState.autoOrbit);
+    }
+  }
+
+  resize() {
+    if (!this.renderer || !this.camera) return;
+    const w = window.innerWidth;
+    const h = window.innerHeight;
+    this.camera.aspect = w / h;
+    this.camera.updateProjectionMatrix();
+    this.renderer.setSize(w, h);
+    this.updateCenterOffset();
+  }
+
+  setSimValue(val) {
+    this.targetSimValue = Math.max(0, Math.min(100, Number(val)));
   }
 
   triggerFeedbackPulse() {
-    this.pulseEffect = 1.0;
+    // Quick celebratory camera zoom bounce
+    const prev = this.camState.targetRadius;
+    this.camState.targetRadius = Math.max(7.2, prev - 1.2);
+    setTimeout(() => {
+      this.camState.targetRadius = prev;
+    }, 450);
   }
 
-  // Helper for rounded rectangles
-  roundRect(ctx, x, y, w, h, r) {
-    ctx.beginPath();
-    ctx.roundRect(x, y, w, h, r);
-    ctx.closePath();
-  }
-
-  // Draw crisp floating HUD badge inside canvas
-  drawBadge(x, y, text, bgColor, textColor = "#ffffff") {
-    const ctx = this.ctx;
-    ctx.save();
-    ctx.font = "700 11px 'Plus Jakarta Sans', sans-serif";
-    const padX = 10;
-    const w = ctx.measureText(text).width + padX * 2;
-    const h = 24;
-    this.roundRect(ctx, x - w / 2, y - h / 2, w, h, 999);
-    ctx.fillStyle = bgColor;
-    ctx.fill();
-    ctx.fillStyle = textColor;
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.fillText(text, x, y + 0.5);
-    ctx.restore();
-  }
-
-  // Draw live progress meter bar inside canvas
-  drawMeter(x, y, w, label, pct, color) {
-    const ctx = this.ctx;
-    ctx.save();
-    this.roundRect(ctx, x, y, w, 38, 10);
-    ctx.fillStyle = "rgba(15, 23, 42, 0.78)";
-    ctx.fill();
-    ctx.strokeStyle = "rgba(255, 255, 255, 0.14)";
-    ctx.lineWidth = 1;
-    ctx.stroke();
-
-    ctx.font = "600 10.5px 'Inter', sans-serif";
-    ctx.fillStyle = "#cbd5e1";
-    ctx.textAlign = "left";
-    ctx.fillText(label, x + 10, y + 14);
-
-    ctx.font = "700 10.5px 'Plus Jakarta Sans', sans-serif";
-    ctx.fillStyle = "#ffffff";
-    ctx.textAlign = "right";
-    ctx.fillText(`${Math.round(pct)}%`, x + w - 10, y + 14);
-
-    // Track
-    this.roundRect(ctx, x + 10, y + 22, w - 20, 7, 4);
-    ctx.fillStyle = "rgba(255, 255, 255, 0.15)";
-    ctx.fill();
-
-    // Fill
-    const fillW = Math.max(4, ((w - 20) * Math.max(0, Math.min(100, pct))) / 100);
-    this.roundRect(ctx, x + 10, y + 22, fillW, 7, 4);
-    ctx.fillStyle = color;
-    ctx.fill();
-    ctx.restore();
-  }
-
-  // ==========================================================================
-  // STAGE 1: CLOWNFISH & SEA ANEMONE (MUTUALISM + / +)
-  // ==========================================================================
-  drawStage1(w, h, t, s) {
-    const ctx = this.ctx;
-    // Reef Ocean Gradient
-    const grad = ctx.createLinearGradient(0, 0, 0, h);
-    grad.addColorStop(0, "#0c2d48");
-    grad.addColorStop(1, "#07162c");
-    ctx.fillStyle = grad;
-    ctx.fillRect(0, 0, w, h);
-
-    // Light rays
-    ctx.save();
-    for (let i = 0; i < 4; i++) {
-      ctx.fillStyle = "rgba(56, 189, 248, 0.045)";
-      ctx.beginPath();
-      ctx.moveTo(60 + i * 110, 0);
-      ctx.lineTo(110 + i * 110, 0);
-      ctx.lineTo(170 + i * 110 + Math.sin(t + i) * 15, h);
-      ctx.lineTo(80 + i * 110 + Math.sin(t + i) * 15, h);
-      ctx.closePath();
-      ctx.fill();
+  clearDiorama() {
+    while (this.dioramaGroup.children.length > 0) {
+      const child = this.dioramaGroup.children[0];
+      this.dioramaGroup.remove(child);
     }
-    ctx.restore();
-
-    // Reef floor
-    ctx.fillStyle = "#112239";
-    ctx.beginPath();
-    ctx.ellipse(w * 0.5, h + 15, w * 0.65, 65, 0, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Coral rock base on right
-    const anemoneX = w * 0.68;
-    const anemoneY = h * 0.73;
-    ctx.fillStyle = "#334155";
-    ctx.beginPath();
-    ctx.ellipse(anemoneX, anemoneY + 22, 78, 30, 0, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Sea Anemone Column
-    ctx.fillStyle = "#9d174d";
-    this.roundRect(ctx, anemoneX - 48, anemoneY - 22, 96, 44, 20);
-    ctx.fill();
-
-    // Swaying Tentacles
-    for (let i = -6; i <= 6; i++) {
-      const baseX = anemoneX + i * 7;
-      const sway = Math.sin(t * 2.4 + i * 0.6) * 8;
-      const tipX = baseX + sway + i * 1.5;
-      const tipY = anemoneY - 72 - Math.abs(Math.cos(i * 0.4)) * 22;
-
-      ctx.strokeStyle = s > 55 ? "#f472b6" : "#be185d";
-      ctx.lineWidth = 6.5;
-      ctx.lineCap = "round";
-      ctx.beginPath();
-      ctx.moveTo(baseX, anemoneY - 12);
-      ctx.quadraticCurveTo(baseX + sway * 0.5, anemoneY - 45, tipX, tipY);
-      ctx.stroke();
-
-      // Glowing stinging tip
-      ctx.fillStyle = s > 55 ? "#34d399" : "#f43f5e";
-      ctx.beginPath();
-      ctx.arc(tipX, tipY, 3.8, 0, Math.PI * 2);
-      ctx.fill();
-    }
-
-    // Clownfish position interpolated by slider s (0..1)
-    const fishX = w * 0.22 + (anemoneX - w * 0.22) * s;
-    const fishY = h * 0.46 + (anemoneY - 48 - h * 0.46) * s + Math.sin(t * 4) * 5;
-
-    // Protective Mucus Shield aura when inside anemone
-    if (s > 0.55) {
-      ctx.save();
-      ctx.strokeStyle = `rgba(16, 185, 129, ${(s - 0.55) * 1.8})`;
-      ctx.fillStyle = `rgba(16, 185, 129, ${(s - 0.55) * 0.22})`;
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.ellipse(fishX, fishY, 42, 26, 0, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.stroke();
-      ctx.restore();
-    }
-
-    // Draw Clownfish
-    ctx.save();
-    ctx.translate(fishX, fishY);
-    // Tail fin
-    const tailSwing = Math.sin(t * 8) * 4;
-    ctx.fillStyle = "#f97316";
-    ctx.beginPath();
-    ctx.moveTo(-22, 0);
-    ctx.lineTo(-34, -11 + tailSwing);
-    ctx.lineTo(-34, 11 + tailSwing);
-    ctx.closePath();
-    ctx.fill();
-
-    // Body
-    ctx.fillStyle = "#fb923c";
-    ctx.beginPath();
-    ctx.ellipse(0, 0, 24, 13, 0, 0, Math.PI * 2);
-    ctx.fill();
-
-    // White stripes
-    ctx.fillStyle = "#ffffff";
-    ctx.fillRect(-10, -11, 5, 22);
-    ctx.fillRect(4, -12, 5, 24);
-
-    // Eye
-    ctx.fillStyle = "#0f172a";
-    ctx.beginPath();
-    ctx.arc(14, -3, 2.6, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.restore();
-
-    // Live Telemetry Meters
-    const safetyPct = 25 + s * 75;
-    const anemoneBenefit = 30 + s * 70;
-    this.drawMeter(16, 16, 195, "Clownfish Safety (+)", safetyPct, "#10b981");
-    this.drawMeter(w - 211, 16, 195, "Anemone Cleaning (+)", anemoneBenefit, "#10b981");
-
-    // Status Badge
-    if (s > 0.6) {
-      this.drawBadge(anemoneX, anemoneY + 26, "MUTUALISM [+ / +] ACTIVE", "#10b981");
-    } else {
-      this.drawBadge(fishX, fishY - 30, "Drag Slider → Move Into Anemone", "#4f46e5");
-    }
+    this.actors = {};
+    this.pins = [];
   }
 
-  // ==========================================================================
-  // STAGE 2: REMORA & SHARK (COMMENSALISM + / 0)
-  // ==========================================================================
-  drawStage2(w, h, t, s) {
-    const ctx = this.ctx;
-    const grad = ctx.createLinearGradient(0, 0, 0, h);
-    grad.addColorStop(0, "#0f172a");
-    grad.addColorStop(1, "#1e293b");
-    ctx.fillStyle = grad;
-    ctx.fillRect(0, 0, w, h);
+  // Create stylized floating 3D island pedestal
+  createIslandBase(topColor = 0x1e293b, rimColor = 0x10b981) {
+    const baseGroup = new THREE.Group();
 
-    // Drifting food scraps
-    ctx.fillStyle = "#fbbf24";
-    this.particles.forEach((p, idx) => {
-      const px = ((p.x - t * 0.08) % 1 + 1) * w;
-      const py = h * 0.45 + Math.sin(p.phase + t * 2) * 55;
-      ctx.beginPath();
-      ctx.arc(px, py, 2.4, 0, Math.PI * 2);
-      ctx.fill();
+    // Main cylindrical platform
+    const platGeo = new THREE.CylinderGeometry(3.8, 3.3, 0.55, 36);
+    const platMat = new THREE.MeshStandardMaterial({
+      color: topColor,
+      roughness: 0.45,
+      metalness: 0.15
     });
+    const plat = new THREE.Mesh(platGeo, platMat);
+    plat.position.y = -1.75;
+    plat.receiveShadow = true;
+    baseGroup.add(plat);
 
-    const sharkX = w * 0.52;
-    const sharkY = h * 0.44 + Math.sin(t * 2.2) * 5;
+    // Glowing holographic outer ring
+    const ringGeo = new THREE.TorusGeometry(3.92, 0.045, 16, 64);
+    const ringMat = new THREE.MeshBasicMaterial({ color: rimColor });
+    const ring = new THREE.Mesh(ringGeo, ringMat);
+    ring.rotation.x = Math.PI / 2;
+    ring.position.y = -1.5;
+    baseGroup.add(ring);
 
-    // Draw Sleek Shark
-    ctx.save();
-    ctx.translate(sharkX, sharkY);
-    // Dorsal fin
-    ctx.fillStyle = "#64748b";
-    ctx.beginPath();
-    ctx.moveTo(-10, -22);
-    ctx.lineTo(15, -56);
-    ctx.lineTo(32, -20);
-    ctx.closePath();
-    ctx.fill();
+    // Lower tapered dark base
+    const underGeo = new THREE.ConeGeometry(3.2, 1.3, 8);
+    const underMat = new THREE.MeshStandardMaterial({
+      color: 0x0f172a,
+      roughness: 0.7,
+      flatShading: true
+    });
+    const under = new THREE.Mesh(underGeo, underMat);
+    under.rotation.x = Math.PI;
+    under.position.y = -2.65;
+    baseGroup.add(under);
+
+    this.dioramaGroup.add(baseGroup);
+    return baseGroup;
+  }
+
+  // Register a 3D world-space callout pin that projects onto the HTML overlay
+  addPin(name, effect, color, worldPosVec3) {
+    this.pins.push({
+      name,
+      effect,
+      color,
+      pos: worldPosVec3,
+      el: null
+    });
+  }
+
+  rebuildPinDOM() {
+    const overlay = document.getElementById("pins-overlay");
+    if (!overlay) return;
+    overlay.innerHTML = "";
+    this.pins.forEach((p) => {
+      const div = document.createElement("div");
+      div.className = "pin-3d";
+      div.innerHTML = `
+        <span class="pin-dot" style="background:${p.color}; color:${p.color}"></span>
+        <span class="pin-name">${p.name}</span>
+        <span class="pin-effect" style="color:${p.color}">${p.effect}</span>
+      `;
+      div.onclick = () => {
+        this.setCameraPreset("closeup");
+      };
+      overlay.appendChild(div);
+      p.el = div;
+    });
+  }
+
+  updateProjectedPins() {
+    if (!this.camera) return;
+    const w = window.innerWidth;
+    const h = window.innerHeight;
+
+    this.pins.forEach((p) => {
+      if (!p.el) return;
+      const v = p.pos.clone();
+      v.applyMatrix4(this.dioramaGroup.matrixWorld);
+      v.project(this.camera);
+
+      if (v.z > 1) {
+        p.el.style.display = "none";
+        return;
+      }
+      const x = (v.x * 0.5 + 0.5) * w;
+      const y = (-(v.y * 0.5) + 0.5) * h;
+      p.el.style.display = "flex";
+      p.el.style.left = `${x}px`;
+      p.el.style.top = `${y}px`;
+    });
+  }
+
+  // ==========================================================================
+  // BUILD 3D DIORAMA FOR EACH OF THE 10 STAGES
+  // ==========================================================================
+  buildStage(stageId, defaultSim = 80) {
+    this.currentStage = stageId;
+    this.simValue = defaultSim;
+    this.targetSimValue = defaultSim;
+    this.clearDiorama();
+
+    switch (stageId) {
+      case 1: this.buildStage1_ReefMutualism(); break;
+      case 2: this.buildStage2_SharkRemora(); break;
+      case 3: this.buildStage3_FernPalmXRay(); break;
+      case 4: this.buildStage4_Rafflesia(); break;
+      case 5: this.buildStage5_Tapeworm(); break;
+      case 6: this.buildStage6_HermitCrab(); break;
+      case 7: this.buildStage7_SymbiosisCrystals(); break;
+      case 8: this.buildStage8_SaplingCompetition(); break;
+      case 9: this.buildStage9_BarnOwlBioControl(); break;
+      default: this.buildStage10_SynthesisCore(); break;
+    }
+
+    this.rebuildPinDOM();
+  }
+
+  // Helper: Create 3D Fish Mesh
+  createClownfish3D() {
+    const fish = new THREE.Group();
+    const orangeMat = new THREE.MeshStandardMaterial({ color: 0xf97316, roughness: 0.3 });
+    const whiteMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.25 });
+    const darkMat = new THREE.MeshStandardMaterial({ color: 0x0f172a });
+
+    const body = new THREE.Mesh(new THREE.SphereGeometry(0.45, 24, 24), orangeMat);
+    body.scale.set(1.55, 0.88, 0.65);
+    body.castShadow = true;
+    fish.add(body);
+
+    // 2 White Collar Stripes
+    const s1 = new THREE.Mesh(new THREE.CylinderGeometry(0.39, 0.39, 0.14, 20), whiteMat);
+    s1.rotation.z = Math.PI / 2;
+    s1.scale.set(0.88, 1, 0.68);
+    s1.position.x = 0.18;
+    fish.add(s1);
+
+    const s2 = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.35, 0.14, 20), whiteMat);
+    s2.rotation.z = Math.PI / 2;
+    s2.scale.set(0.88, 1, 0.68);
+    s2.position.x = -0.22;
+    fish.add(s2);
 
     // Tail fin
-    const tail = Math.sin(t * 5) * 6;
-    ctx.beginPath();
-    ctx.moveTo(-105, 0);
-    ctx.lineTo(-142, -32 + tail);
-    ctx.lineTo(-128, 0);
-    ctx.lineTo(-140, 26 + tail);
-    ctx.closePath();
-    ctx.fill();
+    const tail = new THREE.Mesh(new THREE.ConeGeometry(0.36, 0.5, 4), orangeMat);
+    tail.rotation.z = -Math.PI / 2;
+    tail.scale.set(1, 1, 0.3);
+    tail.position.x = -0.78;
+    fish.add(tail);
+    fish.userData.tail = tail;
 
-    // Main body
-    ctx.fillStyle = "#94a3b8";
-    ctx.beginPath();
-    ctx.ellipse(0, 0, 112, 28, 0, 0, Math.PI * 2);
-    ctx.fill();
-
-    // White belly
-    ctx.fillStyle = "#e2e8f0";
-    ctx.beginPath();
-    ctx.ellipse(5, 10, 95, 14, 0, 0, Math.PI);
-    ctx.fill();
-
-    // Eye & gills
-    ctx.fillStyle = "#0f172a";
-    ctx.beginPath();
-    ctx.arc(82, -5, 3.2, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.strokeStyle = "#475569";
-    ctx.lineWidth = 2;
-    for (let g = 0; g < 3; g++) {
-      ctx.beginPath();
-      ctx.moveTo(45 + g * 7, -6);
-      ctx.lineTo(45 + g * 7, 8);
-      ctx.stroke();
-    }
-    ctx.restore();
-
-    // Remora fish attaches underneath shark as s -> 1
-    const remoraX = sharkX - 35 + s * 45;
-    const remoraY = h * 0.82 + (sharkY + 29 - h * 0.82) * s;
-
-    ctx.save();
-    ctx.translate(remoraX, remoraY);
-    ctx.fillStyle = "#38bdf8";
-    ctx.beginPath();
-    ctx.ellipse(0, 0, 34, 8.5, 0, 0, Math.PI * 2);
-    ctx.fill();
-    // Suction disc on top
-    ctx.fillStyle = "#0284c7";
-    this.roundRect(ctx, -12, -11, 24, 4, 2);
-    ctx.fill();
-    ctx.restore();
-
-    // Meters: Remora benefits (+), Shark stays strictly 100% unaffected (0)
-    this.drawMeter(16, 16, 200, "Remora Food & Transport (+)", 20 + s * 80, "#38bdf8");
-    this.drawMeter(w - 216, 16, 200, "Shark Host Impact (0 Neutral)", 0, "#94a3b8");
-
-    if (s > 0.65) {
-      this.drawBadge(sharkX + 10, sharkY + 62, "COMMENSALISM [+ / 0] — Host Unaffected", "#0284c7");
-    } else {
-      this.drawBadge(remoraX, remoraY - 22, "Slide to Attach Suction Disc ↑", "#4f46e5");
-    }
-  }
-
-  // ==========================================================================
-  // STAGE 3: BIRD'S NEST FERN ON OIL PALM (X-RAY BARK SCANNER + / 0)
-  // ==========================================================================
-  drawStage3(w, h, t, s) {
-    const ctx = this.ctx;
-    const grad = ctx.createLinearGradient(0, 0, 0, h);
-    grad.addColorStop(0, "#0f2922");
-    grad.addColorStop(1, "#091915");
-    ctx.fillStyle = grad;
-    ctx.fillRect(0, 0, w, h);
-
-    const trunkX = w * 0.5;
-    const trunkW = 104;
-
-    // Oil Palm Trunk Outer Bark
-    ctx.fillStyle = "#5c4033";
-    ctx.fillRect(trunkX - trunkW / 2, 0, trunkW, h);
-
-    // Bark texture lines
-    ctx.strokeStyle = "#3e2723";
-    ctx.lineWidth = 2;
-    for (let y = 20; y < h; y += 28) {
-      ctx.beginPath();
-      ctx.moveTo(trunkX - trunkW / 2, y);
-      ctx.lineTo(trunkX + trunkW / 2, y + 8);
-      ctx.stroke();
-    }
-
-    // X-Ray Scanner Window controlled by slider s
-    const xrayHeight = 140;
-    const xrayY = h * 0.52 - xrayHeight / 2;
-    if (s > 0.1) {
-      ctx.save();
-      ctx.globalAlpha = s;
-      // Internal vascular tissue inside trunk
-      ctx.fillStyle = "#1e293b";
-      this.roundRect(ctx, trunkX - trunkW / 2 + 8, xrayY, trunkW - 16, xrayHeight, 8);
-      ctx.fill();
-      ctx.strokeStyle = "#38bdf8";
-      ctx.lineWidth = 2;
-      ctx.stroke();
-
-      // Intact vertical sap vessels (xylem/phloem)
-      for (let vx = -26; vx <= 26; vx += 17) {
-        ctx.strokeStyle = "#0ea5e9";
-        ctx.lineWidth = 4;
-        ctx.beginPath();
-        ctx.moveTo(trunkX + vx, xrayY + 6);
-        ctx.lineTo(trunkX + vx, xrayY + xrayHeight - 6);
-        ctx.stroke();
-
-        // Flowing sap droplets
-        const dropY = xrayY + ((t * 45 + vx * 10) % (xrayHeight - 16)) + 8;
-        ctx.fillStyle = "#7dd3fc";
-        ctx.beginPath();
-        ctx.arc(trunkX + vx, dropY, 3.5, 0, Math.PI * 2);
-        ctx.fill();
-      }
-      ctx.restore();
-    }
-
-    // Bird's Nest Fern perched on RIGHT outer bark surface
-    const fernX = trunkX + trunkW / 2;
-    const fernY = h * 0.52;
-
-    // Spongy root mass strictly on outer bark surface
-    ctx.fillStyle = "#78350f";
-    ctx.beginPath();
-    ctx.arc(fernX + 4, fernY, 22, -Math.PI / 2, Math.PI / 2);
-    ctx.fill();
-
-    // Lush green fronds radiating outward for sunlight
-    const frondAngles = [-0.9, -0.55, -0.2, 0.15, 0.5];
-    frondAngles.forEach((ang, i) => {
-      ctx.save();
-      ctx.translate(fernX + 8, fernY);
-      ctx.rotate(ang + Math.sin(t * 2 + i) * 0.04);
-      ctx.fillStyle = "#10b981";
-      ctx.beginPath();
-      ctx.ellipse(46, 0, 44, 9, 0, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.restore();
+    // Eyes
+    [-0.22, 0.22].forEach((z) => {
+      const eye = new THREE.Mesh(new THREE.SphereGeometry(0.065, 12, 12), darkMat);
+      eye.position.set(0.46, 0.1, z);
+      fish.add(eye);
     });
 
-    this.drawMeter(16, 16, 200, "Fern Sunlight Access (+)", 92, "#10b981");
-    this.drawMeter(w - 216, 16, 200, "Palm Sap Stolen (0% Epiphyte)", 0, "#38bdf8");
+    // Protective Mucus Aura Sphere
+    const shieldMat = new THREE.MeshBasicMaterial({
+      color: 0x10b981,
+      transparent: true,
+      opacity: 0.22,
+      wireframe: true
+    });
+    const shield = new THREE.Mesh(new THREE.SphereGeometry(0.95, 16, 16), shieldMat);
+    fish.add(shield);
+    fish.userData.shield = shield;
 
-    if (s > 0.45) {
-      this.drawBadge(trunkX, h - 26, "X-RAY: Roots Cling to Outer Bark Only [+ / 0]", "#10b981");
-    } else {
-      this.drawBadge(trunkX, h - 26, "Slide X-Ray Scanner to Inspect Root Depth", "#4f46e5");
-    }
+    return fish;
   }
 
-  // ==========================================================================
-  // STAGE 4: RAFFLESIA & TETRASTIGMA VINE (PARASITISM + / -)
-  // ==========================================================================
-  drawStage4(w, h, t, s) {
-    const ctx = this.ctx;
-    ctx.fillStyle = "#18131a";
-    ctx.fillRect(0, 0, w, h);
+  // STAGE 1: 3D Coral Reef — Clownfish & Sea Anemone
+  buildStage1_ReefMutualism() {
+    this.createIslandBase(0x0c4a6e, 0x10b981);
 
-    const centerY = h * 0.62;
-    // Host Tetrastigma Vine across floor
-    ctx.strokeStyle = s > 0.6 ? "#6b5344" : "#4d7c0f";
-    ctx.lineWidth = 22;
-    ctx.lineCap = "round";
-    ctx.beginPath();
-    ctx.moveTo(30, centerY);
-    ctx.quadraticCurveTo(w * 0.5, centerY + 18, w - 30, centerY - 6);
-    ctx.stroke();
+    // Coral Reef Rock Mound
+    const rockMat = new THREE.MeshStandardMaterial({
+      color: 0x334155,
+      roughness: 0.8,
+      flatShading: true
+    });
+    const rock = new THREE.Mesh(new THREE.DodecahedronGeometry(1.35, 1), rockMat);
+    rock.scale.set(1.2, 0.65, 1.1);
+    rock.position.set(0.8, -1.1, 0);
+    this.dioramaGroup.add(rock);
 
-    // Haustoria threads draining nutrients from vine into Rafflesia
-    const flX = w * 0.5;
-    const flY = centerY - 12;
+    // Sea Anemone Base Column
+    const anemGroup = new THREE.Group();
+    anemGroup.position.set(0.8, -0.5, 0);
+    const colMat = new THREE.MeshStandardMaterial({ color: 0xbe185d, roughness: 0.5 });
+    const col = new THREE.Mesh(new THREE.CylinderGeometry(0.95, 1.1, 0.75, 24), colMat);
+    anemGroup.add(col);
 
-    if (s > 0.15) {
-      for (let i = 0; i < 6; i++) {
-        const px = flX - 90 + i * 36;
-        const prog = (t * 0.9 + i * 0.2) % 1;
-        const curX = px + (flX - px) * prog;
-        const curY = centerY + (flY - centerY) * prog;
-        ctx.fillStyle = "#fbbf24";
-        ctx.beginPath();
-        ctx.arc(curX, curY, 4, 0, Math.PI * 2);
-        ctx.fill();
-      }
+    // 24 3D Swaying Tentacles with glowing tips
+    const tentacles = [];
+    const tentMat = new THREE.MeshStandardMaterial({ color: 0xf472b6, roughness: 0.35 });
+    const tipMat = new THREE.MeshBasicMaterial({ color: 0x34d399 });
+
+    for (let i = 0; i < 24; i++) {
+      const angle = (i / 24) * Math.PI * 2;
+      const ringRadius = i % 2 === 0 ? 0.68 : 0.36;
+      const tPivot = new THREE.Group();
+      tPivot.position.set(Math.cos(angle) * ringRadius, 0.32, Math.sin(angle) * ringRadius);
+
+      const stalk = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.1, 1.25, 12), tentMat);
+      stalk.position.y = 0.62;
+      tPivot.add(stalk);
+
+      const tip = new THREE.Mesh(new THREE.SphereGeometry(0.09, 12, 12), tipMat);
+      tip.position.y = 1.26;
+      tPivot.add(tip);
+
+      tPivot.userData = { baseAngle: angle, phase: i * 0.5 };
+      anemGroup.add(tPivot);
+      tentacles.push(tPivot);
     }
+    this.dioramaGroup.add(anemGroup);
+    this.actors.tentacles = tentacles;
 
-    // Giant 5-petalled crimson Rafflesia blooming larger with slider s
-    const scale = 0.55 + s * 0.55;
-    ctx.save();
-    ctx.translate(flX, flY - 18);
-    ctx.scale(scale, scale);
+    // 3D Clownfish
+    const fish = this.createClownfish3D();
+    fish.position.set(0.6, 0.65, 0.2);
+    this.dioramaGroup.add(fish);
+    this.actors.clownfish = fish;
 
-    for (let p = 0; p < 5; p++) {
-      ctx.save();
-      ctx.rotate((p * Math.PI * 2) / 5);
-      ctx.fillStyle = "#be123c";
-      ctx.beginPath();
-      ctx.ellipse(0, -48, 30, 38, 0, 0, Math.PI * 2);
-      ctx.fill();
-
-      // White warts on petals
-      ctx.fillStyle = "#ffe4e6";
-      ctx.beginPath();
-      ctx.arc(-8, -52, 4, 0, Math.PI * 2);
-      ctx.arc(10, -44, 3.5, 0, Math.PI * 2);
-      ctx.arc(0, -64, 3.5, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.restore();
-    }
-
-    // Central corona diaphragm
-    ctx.fillStyle = "#881337";
-    ctx.beginPath();
-    ctx.arc(0, 0, 26, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = "#4c0519";
-    ctx.beginPath();
-    ctx.arc(0, 0, 16, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.restore();
-
-    this.drawMeter(16, 16, 200, "Rafflesia Nutrient Absorption (+)", 30 + s * 70, "#10b981");
-    this.drawMeter(w - 216, 16, 200, "Host Vine Vitality (- Drained)", 95 - s * 65, "#f43f5e");
-
-    this.drawBadge(flX, h - 24, "HOLOPARASITE [+ / -]: No Chlorophyll, Drains Host Vine", "#e11d48");
+    this.addPin("Clownfish", "+ Protected Shelter", "#10b981", new THREE.Vector3(0.6, 1.45, 0.2));
+    this.addPin("Sea Anemone", "+ Cleaned & Defended", "#38bdf8", new THREE.Vector3(1.2, 0.1, -0.6));
   }
 
-  // ==========================================================================
-  // STAGE 5: INTESTINAL TAPEWORM & HOST MAMMAL (ENDOPARASITISM + / -)
-  // ==========================================================================
-  drawStage5(w, h, t, s) {
-    const ctx = this.ctx;
-    ctx.fillStyle = "#1f1218";
-    ctx.fillRect(0, 0, w, h);
+  // STAGE 2: 3D Shark & Hitchhiking Remora Fish
+  buildStage2_SharkRemora() {
+    this.createIslandBase(0x0f172a, 0x38bdf8);
 
-    // Intestinal wall cross-section
-    const topWall = h * 0.26;
-    const botWall = h * 0.78;
-    ctx.fillStyle = "#4c1d2e";
-    ctx.fillRect(0, topWall, w, botWall - topWall);
+    const shark = new THREE.Group();
+    const sharkMat = new THREE.MeshStandardMaterial({ color: 0x64748b, roughness: 0.35, metalness: 0.2 });
+    const bellyMat = new THREE.MeshStandardMaterial({ color: 0xe2e8f0, roughness: 0.4 });
 
-    // Top & bottom villi walls
-    ctx.fillStyle = "#be185d";
-    ctx.fillRect(0, topWall - 12, w, 14);
-    ctx.fillRect(0, botWall - 2, w, 14);
+    // Streamlined fuselage
+    const torso = new THREE.Mesh(new THREE.SphereGeometry(0.85, 28, 28), sharkMat);
+    torso.scale.set(2.9, 0.72, 0.82);
+    torso.castShadow = true;
+    shark.add(torso);
 
-    // Digested nutrient droplets flowing through lumen
-    this.particles.forEach((p, idx) => {
-      const nx = ((p.x + t * 0.1) % 1) * w;
-      let ny = topWall + 22 + (idx % 5) * 22;
-      // Pull nutrients into tapeworm if s is high
-      if (s > 0.3 && nx > w * 0.3) {
-        ny += (h * 0.52 - ny) * s * 0.7;
-      }
-      ctx.fillStyle = "#fbbf24";
-      ctx.beginPath();
-      ctx.arc(nx, ny, 3.5, 0, Math.PI * 2);
-      ctx.fill();
+    const belly = new THREE.Mesh(new THREE.SphereGeometry(0.8, 24, 24), bellyMat);
+    belly.scale.set(2.6, 0.5, 0.76);
+    belly.position.y = -0.18;
+    shark.add(belly);
+
+    // Dorsal Fin
+    const dorsal = new THREE.Mesh(new THREE.ConeGeometry(0.45, 1.15, 4), sharkMat);
+    dorsal.scale.set(1.2, 1, 0.25);
+    dorsal.position.set(-0.1, 0.85, 0);
+    dorsal.rotation.z = -0.25;
+    shark.add(dorsal);
+
+    // Pectoral Fins
+    [-0.85, 0.85].forEach((z) => {
+      const pec = new THREE.Mesh(new THREE.ConeGeometry(0.4, 1.1, 4), sharkMat);
+      pec.position.set(0.3, -0.25, z);
+      pec.rotation.x = z > 0 ? 1.25 : -1.25;
+      shark.add(pec);
     });
 
-    // Segmented Tapeworm inside lumen
-    const segCount = Math.floor(8 + s * 16);
-    for (let i = 0; i < segCount; i++) {
-      const sx = w * 0.2 + i * 13;
-      const sy = h * 0.52 + Math.sin(t * 4 + i * 0.45) * 12;
-      ctx.fillStyle = i === 0 ? "#fef08a" : "#fde047";
-      ctx.strokeStyle = "#ca8a04";
-      ctx.lineWidth = 1.5;
-      this.roundRect(ctx, sx - 7, sy - 9, 12, 18, 4);
-      ctx.fill();
-      ctx.stroke();
-    }
+    // Tail Fin
+    const tail = new THREE.Mesh(new THREE.ConeGeometry(0.65, 1.2, 4), sharkMat);
+    tail.position.set(-2.55, 0.15, 0);
+    tail.rotation.z = -Math.PI / 2;
+    tail.scale.set(1, 1, 0.25);
+    shark.add(tail);
+    shark.userData.tail = tail;
 
-    this.drawMeter(16, 16, 200, "Tapeworm Nutrient Theft (+)", 20 + s * 80, "#10b981");
-    this.drawMeter(w - 216, 16, 200, "Host Cat Nutrition (- Harmed)", 95 - s * 65, "#f43f5e");
-    this.drawBadge(w * 0.5, h - 22, "ENDOPARASITISM [+ / -]: Parasite Steals Digested Food", "#e11d48");
+    shark.position.set(0, 0.7, 0);
+    this.dioramaGroup.add(shark);
+    this.actors.shark = shark;
+
+    // 3D Remora with Suction Pad
+    const remora = new THREE.Group();
+    const remMat = new THREE.MeshStandardMaterial({ color: 0x38bdf8, roughness: 0.3 });
+    const remBody = new THREE.Mesh(new THREE.SphereGeometry(0.32, 20, 20), remMat);
+    remBody.scale.set(2.4, 0.5, 0.6);
+    remora.add(remBody);
+
+    const padMat = new THREE.MeshStandardMaterial({ color: 0x0284c7 });
+    const pad = new THREE.Mesh(new THREE.BoxGeometry(0.65, 0.08, 0.24), padMat);
+    pad.position.y = 0.16;
+    remora.add(pad);
+
+    remora.position.set(0.2, 0.05, 0);
+    this.dioramaGroup.add(remora);
+    this.actors.remora = remora;
+
+    this.addPin("Shark Host", "0 Unaffected (Neutral)", "#94a3b8", new THREE.Vector3(0.2, 1.85, 0));
+    this.addPin("Remora Fish", "+ Free Transport & Scraps", "#38bdf8", new THREE.Vector3(0.3, -0.35, 0.4));
   }
 
-  // ==========================================================================
-  // STAGE 6: HERMIT CRAB & SEA ANEMONE (MUTUALISM + / +)
-  // ==========================================================================
-  drawStage6(w, h, t, s) {
-    const ctx = this.ctx;
-    const grad = ctx.createLinearGradient(0, 0, 0, h);
-    grad.addColorStop(0, "#0f2942");
-    grad.addColorStop(1, "#0a1929");
-    ctx.fillStyle = grad;
-    ctx.fillRect(0, 0, w, h);
+  // STAGE 3: 3D Oil Palm Trunk & Bird's Nest Fern with 3D X-Ray Ring
+  buildStage3_FernPalmXRay() {
+    this.createIslandBase(0x14532d, 0x10b981);
 
-    // Sandy seabed
-    ctx.fillStyle = "#b45309";
-    ctx.fillRect(0, h * 0.75, w, h * 0.25);
+    // Oil Palm Trunk
+    const trunkMat = new THREE.MeshStandardMaterial({
+      color: 0x5c4033,
+      roughness: 0.85,
+      transparent: true,
+      opacity: 0.9
+    });
+    const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.85, 1.05, 4.4, 24), trunkMat);
+    trunk.position.y = 0.6;
+    this.dioramaGroup.add(trunk);
+    this.actors.palmTrunk = trunk;
 
-    // Crab + Anemone moves right with slider s
-    const crabX = w * 0.25 + s * (w * 0.36);
-    const crabY = h * 0.72;
+    // Internal Glowing Blue Vascular Sap Tubes (Visible when X-Ray slider increases)
+    const sapGroup = new THREE.Group();
+    const sapMat = new THREE.MeshBasicMaterial({ color: 0x38bdf8 });
+    [-0.32, 0, 0.32].forEach((x) => {
+      const tube = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 4.2, 12), sapMat);
+      tube.position.set(x, 0.6, 0);
+      sapGroup.add(tube);
+    });
+    this.dioramaGroup.add(sapGroup);
+    this.actors.sapGroup = sapGroup;
 
-    // Shell
-    ctx.fillStyle = "#d97706";
-    ctx.beginPath();
-    ctx.arc(crabX, crabY - 18, 30, 0, Math.PI * 2);
-    ctx.fill();
+    // 3D Holographic X-Ray Scanner Ring around trunk
+    const xrayRing = new THREE.Mesh(
+      new THREE.TorusGeometry(1.18, 0.05, 16, 48),
+      new THREE.MeshBasicMaterial({ color: 0x38bdf8 })
+    );
+    xrayRing.rotation.x = Math.PI / 2;
+    xrayRing.position.y = 0.6;
+    this.dioramaGroup.add(xrayRing);
+    this.actors.xrayRing = xrayRing;
 
-    // Crab legs & claws
-    ctx.strokeStyle = "#ef4444";
-    ctx.lineWidth = 5;
-    for (let l = -2; l <= 2; l++) {
-      if (l === 0) continue;
-      ctx.beginPath();
-      ctx.moveTo(crabX + l * 10, crabY - 4);
-      ctx.lineTo(crabX + l * 15 + Math.sin(t * 6 + l) * 3, crabY + 12);
-      ctx.stroke();
+    // Bird's Nest Fern perched on outer right bark
+    const fern = new THREE.Group();
+    fern.position.set(0.88, 0.55, 0);
+
+    const rootBall = new THREE.Mesh(
+      new THREE.SphereGeometry(0.42, 16, 16),
+      new THREE.MeshStandardMaterial({ color: 0x78350f, roughness: 0.9 })
+    );
+    fern.add(rootBall);
+
+    const frondMat = new THREE.MeshStandardMaterial({ color: 0x10b981, roughness: 0.4 });
+    for (let i = 0; i < 9; i++) {
+      const f = new THREE.Mesh(new THREE.BoxGeometry(1.25, 0.06, 0.28), frondMat);
+      const angle = (i / 9) * Math.PI - Math.PI / 2;
+      f.position.set(0.55, 0.25 + Math.sin(i) * 0.15, Math.sin(angle) * 0.55);
+      f.rotation.z = 0.45 + (i % 3) * 0.15;
+      f.rotation.y = angle * 0.5;
+      fern.add(f);
     }
+    this.dioramaGroup.add(fern);
+    this.actors.fern = fern;
 
-    // Sea Anemone riding on top of the shell
-    ctx.fillStyle = "#db2777";
-    this.roundRect(ctx, crabX - 18, crabY - 62, 36, 22, 8);
-    ctx.fill();
-
-    for (let k = -4; k <= 4; k++) {
-      ctx.strokeStyle = "#f472b6";
-      ctx.lineWidth = 4;
-      ctx.beginPath();
-      ctx.moveTo(crabX + k * 4, crabY - 60);
-      ctx.lineTo(crabX + k * 6 + Math.sin(t * 3 + k) * 4, crabY - 82);
-      ctx.stroke();
-    }
-
-    // Approaching Predator retreats when crab & stinging anemone advance
-    const predX = w * 0.82 + Math.max(0, s - 0.4) * 90;
-    const predY = h * 0.44 + Math.sin(t * 2) * 8;
-    ctx.fillStyle = "#6366f1";
-    ctx.beginPath();
-    ctx.arc(predX, predY, 22, 0, Math.PI * 2);
-    ctx.fill();
-    this.drawBadge(predX, predY - 32, s > 0.5 ? "Predator Deterred!" : "Predator Nearby", "#6366f1");
-
-    this.drawMeter(16, 16, 195, "Crab Predator Defense (+)", 35 + s * 65, "#10b981");
-    this.drawMeter(w - 211, 16, 195, "Anemone Feeding Grounds (+)", 30 + s * 70, "#10b981");
+    this.addPin("Bird's Nest Fern", "+ Sunlit Epiphyte", "#10b981", new THREE.Vector3(1.65, 1.35, 0));
+    this.addPin("Oil Palm Trunk", "0 Outer Bark Unharmed", "#38bdf8", new THREE.Vector3(-0.7, 0.8, 0));
   }
 
-  // ==========================================================================
-  // STAGE 7: ECOLOGICAL OUTCOME MATRIX ([+ / +], [+ / 0], [+ / -])
-  // ==========================================================================
-  drawStage7(w, h, t, s) {
-    const ctx = this.ctx;
-    ctx.fillStyle = "#0f172a";
-    ctx.fillRect(0, 0, w, h);
+  // STAGE 4: 3D Giant Rafflesia & Tetrastigma Vine
+  buildStage4_Rafflesia() {
+    this.createIslandBase(0x1f2937, 0xf43f5e);
 
-    const cards = [
-      { code: "[+ / +]", title: "Mutualism", ex: "Mynah & Buffalo", a: 95, b: 95, col: "#10b981" },
-      { code: "[+ / 0]", title: "Commensalism", ex: "Orchid & Tree", a: 95, b: 50, col: "#38bdf8" },
-      { code: "[+ / -]", title: "Parasitism", ex: "Tick & Dog", a: 95, b: 15, col: "#f43f5e" }
+    // Host Tetrastigma Vine
+    const vineMat = new THREE.MeshStandardMaterial({ color: 0x4d7c0f, roughness: 0.7 });
+    const vine = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.32, 5.5, 20), vineMat);
+    vine.rotation.z = Math.PI / 2;
+    vine.position.y = -1.1;
+    this.dioramaGroup.add(vine);
+    this.actors.vine = vine;
+
+    // 3D Giant 5-Petalled Rafflesia Flower
+    const rafflesia = new THREE.Group();
+    rafflesia.position.set(0, -0.55, 0);
+
+    const petalMat = new THREE.MeshStandardMaterial({ color: 0xbe123c, roughness: 0.45 });
+    const wartMat = new THREE.MeshStandardMaterial({ color: 0xffe4e6 });
+
+    for (let i = 0; i < 5; i++) {
+      const pGroup = new THREE.Group();
+      pGroup.rotation.y = (i * Math.PI * 2) / 5;
+
+      const petal = new THREE.Mesh(new THREE.SphereGeometry(0.85, 20, 20), petalMat);
+      petal.scale.set(0.95, 0.22, 1.25);
+      petal.position.set(0, 0.15, 1.15);
+      petal.rotation.x = -0.22;
+      pGroup.add(petal);
+
+      // Raised white warts on 3D petals
+      [-0.25, 0.22].forEach((wx) => {
+        const wart = new THREE.Mesh(new THREE.SphereGeometry(0.11, 10, 10), wartMat);
+        wart.position.set(wx, 0.34, 1.15 + wx * 0.4);
+        pGroup.add(wart);
+      });
+
+      rafflesia.add(pGroup);
+    }
+
+    // Central Corona Bowl
+    const corona = new THREE.Mesh(
+      new THREE.TorusGeometry(0.68, 0.24, 16, 32),
+      new THREE.MeshStandardMaterial({ color: 0x881337, roughness: 0.5 })
+    );
+    corona.rotation.x = Math.PI / 2;
+    corona.position.y = 0.25;
+    rafflesia.add(corona);
+
+    this.dioramaGroup.add(rafflesia);
+    this.actors.rafflesia = rafflesia;
+
+    this.addPin("Rafflesia (Parasite)", "+ Drains Host Sap", "#f43f5e", new THREE.Vector3(0, 0.85, 0));
+    this.addPin("Tetrastigma Vine", "- Weakened Host", "#f59e0b", new THREE.Vector3(-2.1, -0.7, 0));
+  }
+
+  // STAGE 5: 3D Intestinal Cutaway & Undulating Tapeworm
+  buildStage5_Tapeworm() {
+    this.createIslandBase(0x31102f, 0xf43f5e);
+
+    // 3D Cutaway Half-Cylinder of Small Intestine
+    const wallGeo = new THREE.CylinderGeometry(1.65, 1.65, 5.4, 24, 1, true, 0, Math.PI);
+    const wallMat = new THREE.MeshStandardMaterial({
+      color: 0x9d174d,
+      roughness: 0.6,
+      side: THREE.DoubleSide
+    });
+    const wall = new THREE.Mesh(wallGeo, wallMat);
+    wall.rotation.z = Math.PI / 2;
+    wall.rotation.x = Math.PI;
+    wall.position.y = 0.2;
+    this.dioramaGroup.add(wall);
+
+    // 22-Segment Undulating 3D Tapeworm
+    const wormSegments = [];
+    const segMat = new THREE.MeshStandardMaterial({ color: 0xfde047, roughness: 0.35 });
+    for (let i = 0; i < 22; i++) {
+      const seg = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.36, 0.14), segMat);
+      seg.position.set(-2.1 + i * 0.2, 0.2, 0);
+      this.dioramaGroup.add(seg);
+      wormSegments.push(seg);
+    }
+    this.actors.wormSegments = wormSegments;
+
+    this.addPin("Tapeworm", "+ Parasite (Steals Nutrients)", "#10b981", new THREE.Vector3(0.3, 1.1, 0));
+    this.addPin("Host Intestine", "- Malnourished Host", "#f43f5e", new THREE.Vector3(-1.6, -0.4, 0.8));
+  }
+
+  // STAGE 6: 3D Hermit Crab + Sea Anemone vs. Predator
+  buildStage6_HermitCrab() {
+    this.createIslandBase(0x78350f, 0x10b981);
+
+    const crabGroup = new THREE.Group();
+    crabGroup.position.set(-0.6, -0.95, 0);
+
+    // Spiral Snail Shell
+    const shell = new THREE.Mesh(
+      new THREE.DodecahedronGeometry(0.95, 1),
+      new THREE.MeshStandardMaterial({ color: 0xd97706, roughness: 0.5 })
+    );
+    shell.scale.set(1.2, 0.95, 1.0);
+    crabGroup.add(shell);
+
+    // Red Crab Claws & Legs
+    const legMat = new THREE.MeshStandardMaterial({ color: 0xef4444, roughness: 0.4 });
+    [-0.55, 0.55].forEach((z) => {
+      const claw = new THREE.Mesh(new THREE.SphereGeometry(0.32, 16, 16), legMat);
+      claw.scale.set(1.5, 0.7, 0.7);
+      claw.position.set(0.95, -0.25, z);
+      crabGroup.add(claw);
+    });
+
+    // Sea Anemone riding on top of shell
+    const anem = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.45, 0.52, 0.55, 18),
+      new THREE.MeshStandardMaterial({ color: 0xdb2777 })
+    );
+    anem.position.y = 0.95;
+    crabGroup.add(anem);
+
+    for (let i = 0; i < 12; i++) {
+      const ang = (i / 12) * Math.PI * 2;
+      const t = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.04, 0.06, 0.65, 8),
+        new THREE.MeshBasicMaterial({ color: 0xf472b6 })
+      );
+      t.position.set(Math.cos(ang) * 0.32, 1.4, Math.sin(ang) * 0.32);
+      crabGroup.add(t);
+    }
+
+    this.dioramaGroup.add(crabGroup);
+    this.actors.crabGroup = crabGroup;
+
+    // 3D Octopus Predator
+    const octo = new THREE.Mesh(
+      new THREE.SphereGeometry(0.68, 20, 20),
+      new THREE.MeshStandardMaterial({ color: 0x6366f1, roughness: 0.35 })
+    );
+    octo.position.set(2.2, 0.6, 0);
+    this.dioramaGroup.add(octo);
+    this.actors.octo = octo;
+
+    this.addPin("Sea Anemone", "+ Stinging Shield & Mobility", "#10b981", new THREE.Vector3(-0.4, 1.2, 0));
+    this.addPin("Hermit Crab", "+ Protected Carrier", "#38bdf8", new THREE.Vector3(-0.4, -0.4, 0.7));
+  }
+
+  // STAGE 7: 3D Symbiosis Crystal Monuments ([+ / +], [+ / 0], [+ / -])
+  buildStage7_SymbiosisCrystals() {
+    this.createIslandBase(0x1e293b, 0x6366f1);
+
+    const configs = [
+      { x: -2.1, col: 0x10b981, name: "Mutualism [+ / +]", sub: "Mynah & Buffalo" },
+      { x: 0.0, col: 0x38bdf8, name: "Commensalism [+ / 0]", sub: "Orchid & Tree" },
+      { x: 2.1, col: 0xf43f5e, name: "Parasitism [+ / -]", sub: "Tick & Dog" }
     ];
 
-    const activeIdx = s < 0.34 ? 0 : s < 0.67 ? 1 : 2;
-    const cardW = (w - 64) / 3;
+    this.actors.crystals = [];
+    configs.forEach((c) => {
+      const crystal = new THREE.Mesh(
+        new THREE.OctahedronGeometry(0.78, 0),
+        new THREE.MeshStandardMaterial({
+          color: c.col,
+          roughness: 0.15,
+          metalness: 0.5,
+          emissive: c.col,
+          emissiveIntensity: 0.25
+        })
+      );
+      crystal.position.set(c.x, 0.35, 0);
+      this.dioramaGroup.add(crystal);
+      this.actors.crystals.push(crystal);
 
-    cards.forEach((c, i) => {
-      const x = 20 + i * (cardW + 12);
-      const y = 38;
-      const isSelected = i === activeIdx;
-
-      ctx.save();
-      this.roundRect(ctx, x, y, cardW, h - 76, 14);
-      ctx.fillStyle = isSelected ? "rgba(30, 41, 59, 0.98)" : "rgba(15, 23, 42, 0.65)";
-      ctx.fill();
-      ctx.strokeStyle = isSelected ? c.col : "rgba(255,255,255,0.12)";
-      ctx.lineWidth = isSelected ? 2.5 : 1;
-      ctx.stroke();
-
-      ctx.fillStyle = c.col;
-      ctx.font = "800 18px 'Plus Jakarta Sans', sans-serif";
-      ctx.textAlign = "center";
-      ctx.fillText(c.code, x + cardW / 2, y + 36);
-
-      ctx.fillStyle = "#ffffff";
-      ctx.font = "700 13px 'Plus Jakarta Sans', sans-serif";
-      ctx.fillText(c.title, x + cardW / 2, y + 60);
-
-      ctx.fillStyle = "#94a3b8";
-      ctx.font = "500 11px 'Inter', sans-serif";
-      ctx.fillText(c.ex, x + cardW / 2, y + 80);
-
-      // Species A & B fitness bars
-      ctx.textAlign = "left";
-      ctx.font = "600 10px 'Inter', sans-serif";
-      ctx.fillStyle = "#cbd5e1";
-      ctx.fillText("Species A (+)", x + 14, y + 115);
-      this.roundRect(ctx, x + 14, y + 122, (cardW - 28) * (c.a / 100), 8, 4);
-      ctx.fillStyle = "#10b981";
-      ctx.fill();
-
-      ctx.fillStyle = "#cbd5e1";
-      ctx.fillText(i === 0 ? "Species B (+)" : i === 1 ? "Species B (0)" : "Host B (-)", x + 14, y + 155);
-      this.roundRect(ctx, x + 14, y + 162, (cardW - 28) * (c.b / 100), 8, 4);
-      ctx.fillStyle = i === 0 ? "#10b981" : i === 1 ? "#94a3b8" : "#f43f5e";
-      ctx.fill();
-
-      ctx.restore();
+      this.addPin(c.name, c.sub, `#${c.col.toString(16).padStart(6, "0")}`, new THREE.Vector3(c.x, 1.4, 0));
     });
-
-    this.drawBadge(w * 0.5, h - 18, "Slide to Inspect Ecological Outcome Codes", "#4f46e5");
   }
 
-  // ==========================================================================
-  // STAGE 8: PLANT COMPETITION — CROWDED VS SPACED SAPLINGS
-  // ==========================================================================
-  drawStage8(w, h, t, s) {
-    const ctx = this.ctx;
-    ctx.fillStyle = "#0f1f1c";
-    ctx.fillRect(0, 0, w, h);
+  // STAGE 8: 3D Greenhouse Pots — Crowded vs. Spaced Saplings
+  buildStage8_SaplingCompetition() {
+    this.createIslandBase(0x1e293b, 0xf59e0b);
 
-    const potY = h * 0.74;
-    // Left Pot: Crowded (density controlled by slider s)
-    const leftX = w * 0.28;
-    const rightX = w * 0.72;
-
-    // Draw pots
-    [leftX, rightX].forEach((px) => {
-      ctx.fillStyle = "#9a3412";
-      this.roundRect(ctx, px - 68, potY, 136, 52, 8);
-      ctx.fill();
+    const potMat = new THREE.MeshStandardMaterial({ color: 0xb45309, roughness: 0.65 });
+    [-1.55, 1.55].forEach((x) => {
+      const pot = new THREE.Mesh(new THREE.CylinderGeometry(1.15, 0.88, 1.1, 24), potMat);
+      pot.position.set(x, -0.95, 0);
+      this.dioramaGroup.add(pot);
     });
 
-    // Left Pot saplings: count increases from 4 to 18 with slider s, height shrinks
-    const crowdedCount = Math.floor(4 + s * 14);
-    const crowdedHeight = 82 - s * 42;
-    for (let i = 0; i < crowdedCount; i++) {
-      const sx = leftX - 52 + (i / Math.max(1, crowdedCount - 1)) * 104;
-      ctx.strokeStyle = s > 0.5 ? "#eab308" : "#22c55e";
-      ctx.lineWidth = 2.5;
-      ctx.beginPath();
-      ctx.moveTo(sx, potY);
-      ctx.lineTo(sx + Math.sin(i) * 4, potY - crowdedHeight);
-      ctx.stroke();
-
-      ctx.fillStyle = s > 0.5 ? "#facc15" : "#4ade80";
-      ctx.beginPath();
-      ctx.arc(sx + Math.sin(i) * 4, potY - crowdedHeight, 4.5, 0, Math.PI * 2);
-      ctx.fill();
+    // Left Pot: Crowded Stunted Saplings
+    const crowdedList = [];
+    const paleMat = new THREE.MeshStandardMaterial({ color: 0xeab308, roughness: 0.5 });
+    for (let i = 0; i < 16; i++) {
+      const ang = (i / 16) * Math.PI * 2;
+      const r = (i % 3) * 0.28 + 0.12;
+      const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.045, 0.9, 8), paleMat);
+      stem.position.set(-1.55 + Math.cos(ang) * r, -0.1, Math.sin(ang) * r);
+      this.dioramaGroup.add(stem);
+      crowdedList.push(stem);
     }
+    this.actors.crowdedList = crowdedList;
 
-    // Right Pot: 3 Spaced, healthy tall green saplings
-    [-38, 0, 38].forEach((offset) => {
-      const sx = rightX + offset;
-      ctx.strokeStyle = "#10b981";
-      ctx.lineWidth = 4.5;
-      ctx.beginPath();
-      ctx.moveTo(sx, potY);
-      ctx.lineTo(sx, potY - 94);
-      ctx.stroke();
+    // Right Pot: 3 Spaced Lush Emerald Saplings
+    const lushMat = new THREE.MeshStandardMaterial({ color: 0x10b981, roughness: 0.35 });
+    [-0.45, 0, 0.45].forEach((dx, idx) => {
+      const dz = idx === 1 ? -0.35 : 0.25;
+      const tree = new THREE.Group();
+      tree.position.set(1.55 + dx, -0.35, dz);
 
-      ctx.fillStyle = "#34d399";
-      ctx.beginPath();
-      ctx.ellipse(sx - 9, potY - 88, 10, 5, -0.4, 0, Math.PI * 2);
-      ctx.ellipse(sx + 9, potY - 88, 10, 5, 0.4, 0, Math.PI * 2);
-      ctx.fill();
+      const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.09, 1.75, 12), lushMat);
+      trunk.position.y = 0.85;
+      tree.add(trunk);
+
+      const crown = new THREE.Mesh(new THREE.SphereGeometry(0.38, 16, 16), lushMat);
+      crown.position.y = 1.75;
+      tree.add(crown);
+
+      this.dioramaGroup.add(tree);
     });
 
-    this.drawMeter(16, 16, 200, "Pot A Resource Per Plant", 90 - s * 72, "#f59e0b");
-    this.drawMeter(w - 216, 16, 200, "Pot B Spaced Growth (+)", 96, "#10b981");
-    this.drawBadge(leftX, potY + 26, `Pot A: ${crowdedCount} Crowded Saplings`, "#d97706");
-    this.drawBadge(rightX, potY + 26, "Pot B: 3 Spaced Saplings", "#10b981");
+    this.addPin("Pot A (Crowded)", "- High Competition (Stunted)", "#f59e0b", new THREE.Vector3(-1.55, 0.95, 0));
+    this.addPin("Pot B (3 Spaced)", "+ Optimal Sunlight, Water & Space", "#10b981", new THREE.Vector3(1.55, 1.75, 0));
   }
 
-  // ==========================================================================
-  // STAGE 9: BIOLOGICAL CONTROL — BARN OWLS & RATS IN OIL PALM ESTATE
-  // ==========================================================================
-  drawStage9(w, h, t, s) {
-    const ctx = this.ctx;
-    ctx.fillStyle = "#0f172a";
-    ctx.fillRect(0, 0, w, h);
+  // STAGE 9: 3D Oil Palm Estate & Swooping 3D Barn Owl (Biological Control)
+  buildStage9_BarnOwlBioControl() {
+    this.createIslandBase(0x14532d, 0x38bdf8);
 
-    const owlCount = Math.round(1 + s * 9);
-    const ratPct = Math.round(92 - s * 78);
-    const yieldPct = Math.round(32 + s * 64);
-
-    // Live Population Graph Card inside viewport
-    const gx = 32;
-    const gy = 76;
-    const gw = w - 64;
-    const gh = h - 118;
-
-    this.roundRect(ctx, gx, gy, gw, gh, 14);
-    ctx.fillStyle = "rgba(30, 41, 59, 0.85)";
-    ctx.fill();
-    ctx.strokeStyle = "rgba(255,255,255,0.1)";
-    ctx.stroke();
-
-    // Draw Yield Rising Curve & Rat Falling Curve up to current slider s
-    ctx.save();
-    // Rat Pest Line (Rose)
-    ctx.strokeStyle = "#f43f5e";
-    ctx.lineWidth = 3.5;
-    ctx.beginPath();
-    ctx.moveTo(gx + 24, gy + 30);
-    ctx.quadraticCurveTo(gx + gw * 0.5, gy + 30 + s * (gh - 60), gx + gw - 24, gy + gh - 25 - (1 - s) * 90);
-    ctx.stroke();
-
-    // Palm Fruit Yield Line (Emerald)
-    ctx.strokeStyle = "#10b981";
-    ctx.lineWidth = 3.5;
-    ctx.beginPath();
-    ctx.moveTo(gx + 24, gy + gh - 28);
-    ctx.quadraticCurveTo(gx + gw * 0.5, gy + gh - 28 - s * (gh - 60), gx + gw - 24, gy + 28 + (1 - s) * 90);
-    ctx.stroke();
-    ctx.restore();
-
-    // Animated Swooping Owl icon
-    const owlX = gx + 45 + s * (gw - 90);
-    const owlY = gy + 48 + Math.sin(t * 4) * 6;
-    ctx.fillStyle = "#f8fafc";
-    ctx.beginPath();
-    ctx.ellipse(owlX, owlY, 22, 10, 0, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = "#f59e0b";
-    ctx.beginPath();
-    ctx.arc(owlX - 5, owlY - 1, 2.5, 0, Math.PI * 2);
-    ctx.arc(owlX + 5, owlY - 1, 2.5, 0, Math.PI * 2);
-    ctx.fill();
-
-    this.drawMeter(16, 16, 200, `Rat Pest Population ↓`, ratPct, "#f43f5e");
-    this.drawMeter(w - 216, 16, 200, `Oil Palm Fruit Yield ↑`, yieldPct, "#10b981");
-    this.drawBadge(w * 0.5, h - 20, `Bio-Control Active: ${owlCount} Barn Owls Hunting Rats`, "#10b981");
-  }
-
-  // ==========================================================================
-  // STAGE 10: FINAL ECOSYSTEM SYNTHESIS NETWORK
-  // ==========================================================================
-  drawStage10(w, h, t, s) {
-    const ctx = this.ctx;
-    ctx.fillStyle = "#0f172a";
-    ctx.fillRect(0, 0, w, h);
-
-    const cx = w * 0.5;
-    const cy = h * 0.52;
-    const nodes = [
-      { x: cx - 145, y: cy - 55, label: "Mutualism [+ / +]", sub: "Rhizobium & Legume", col: "#10b981" },
-      { x: cx + 145, y: cy - 55, label: "Commensalism [+ / 0]", sub: "Barnacles & Whale", col: "#38bdf8" },
-      { x: cx - 145, y: cy + 65, label: "Parasitism [+ / -]", sub: "Mistletoe & Mango", col: "#f43f5e" },
-      { x: cx + 145, y: cy + 65, label: "Competition [- / -]", sub: "Intraspecific / Inter", col: "#f59e0b" }
-    ];
-
-    // Connecting lines
-    nodes.forEach((n, i) => {
-      ctx.strokeStyle = "rgba(148, 163, 184, 0.3)";
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.moveTo(cx, cy);
-      ctx.lineTo(n.x, n.y);
-      ctx.stroke();
-
-      // Pulse dot along line
-      const p = (t * 0.6 + i * 0.25) % 1;
-      ctx.fillStyle = n.col;
-      ctx.beginPath();
-      ctx.arc(cx + (n.x - cx) * p, cy + (n.y - cy) * p, 4, 0, Math.PI * 2);
-      ctx.fill();
-
-      // Node card
-      this.roundRect(ctx, n.x - 78, n.y - 24, 156, 48, 10);
-      ctx.fillStyle = "#1e293b";
-      ctx.fill();
-      ctx.strokeStyle = n.col;
-      ctx.lineWidth = 2;
-      ctx.stroke();
-
-      ctx.fillStyle = "#ffffff";
-      ctx.font = "700 11.5px 'Plus Jakarta Sans', sans-serif";
-      ctx.textAlign = "center";
-      ctx.fillText(n.label, n.x, n.y - 4);
-      ctx.fillStyle = "#94a3b8";
-      ctx.font = "500 10px 'Inter', sans-serif";
-      ctx.fillText(n.sub, n.x, n.y + 12);
+    // 2 Oil Palm Trees
+    const trunkMat = new THREE.MeshStandardMaterial({ color: 0x5c4033 });
+    const leafMat = new THREE.MeshStandardMaterial({ color: 0x15803d });
+    [-1.8, 1.8].forEach((x) => {
+      const palm = new THREE.Group();
+      palm.position.set(x, -1.4, -0.6);
+      const t = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.38, 2.5, 16), trunkMat);
+      t.position.y = 1.25;
+      palm.add(t);
+      const crown = new THREE.Mesh(new THREE.DodecahedronGeometry(0.95, 1), leafMat);
+      crown.scale.set(1.3, 0.55, 1.3);
+      crown.position.y = 2.55;
+      palm.add(crown);
+      this.dioramaGroup.add(palm);
     });
 
-    // Center hub
-    this.roundRect(ctx, cx - 64, cy - 26, 128, 52, 999);
-    ctx.fillStyle = "#4f46e5";
-    ctx.fill();
-    ctx.fillStyle = "#ffffff";
-    ctx.font = "800 12px 'Plus Jakarta Sans', sans-serif";
-    ctx.textAlign = "center";
-    ctx.fillText("UNIT 4 SYNTHESIS", cx, cy + 4);
+    // 3D Articulated Swooping Barn Owl
+    const owl = new THREE.Group();
+    const owlMat = new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.4 });
+    const wingMat = new THREE.MeshStandardMaterial({ color: 0xd97706, roughness: 0.5 });
+
+    const body = new THREE.Mesh(new THREE.SphereGeometry(0.38, 16, 16), owlMat);
+    body.scale.set(1.3, 0.9, 0.85);
+    owl.add(body);
+
+    const leftWing = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.06, 1.1), wingMat);
+    leftWing.position.z = 0.65;
+    owl.add(leftWing);
+
+    const rightWing = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.06, 1.1), wingMat);
+    rightWing.position.z = -0.65;
+    owl.add(rightWing);
+
+    owl.userData = { leftWing, rightWing };
+    owl.position.set(0, 1.1, 0.4);
+    this.dioramaGroup.add(owl);
+    this.actors.owl = owl;
+
+    this.addPin("Barn Owl (Predator)", "+ Natural Bio-Control", "#38bdf8", new THREE.Vector3(0, 1.85, 0.4));
+    this.addPin("Oil Palm Estate", "+ Fruit Yield Increases ↑", "#10b981", new THREE.Vector3(1.8, 1.65, -0.6));
   }
 
+  // STAGE 10: 3D Ecosystem Synthesis Gyroscope Core
+  buildStage10_SynthesisCore() {
+    this.createIslandBase(0x0f172a, 0xf59e0b);
+
+    const core = new THREE.Group();
+    core.position.y = 0.35;
+
+    const sun = new THREE.Mesh(
+      new THREE.IcosahedronGeometry(0.85, 1),
+      new THREE.MeshStandardMaterial({
+        color: 0x10b981,
+        emissive: 0x059669,
+        emissiveIntensity: 0.4,
+        wireframe: false,
+        flatShading: true
+      })
+    );
+    core.add(sun);
+
+    const rings = [];
+    [1.55, 2.15, 2.75].forEach((r, i) => {
+      const cols = [0x10b981, 0x38bdf8, 0xf43f5e];
+      const ring = new THREE.Mesh(
+        new THREE.TorusGeometry(r, 0.04, 16, 64),
+        new THREE.MeshBasicMaterial({ color: cols[i] })
+      );
+      ring.rotation.x = 0.6 + i * 0.45;
+      core.add(ring);
+      rings.push(ring);
+    });
+
+    this.dioramaGroup.add(core);
+    this.actors.gyroRings = rings;
+    this.actors.gyroSun = sun;
+
+    this.addPin("Unit 4 Mastery Core", "Symbiosis · Predation · Competition", "#10b981", new THREE.Vector3(0, 1.85, 0));
+  }
+
+  // ==========================================================================
+  // 60FPS ANIMATION LOOP & LIVE SLIDER PHYSICS
+  // ==========================================================================
   animate() {
     requestAnimationFrame(() => this.animate());
-    if (!this.ctx) return;
+    if (!this.renderer || !this.scene || !this.camera) return;
 
-    this.time += 0.016;
-    this.simValue += (this.targetSimValue - this.simValue) * 0.12;
+    const t = this.clock.getElapsedTime();
+    this.simValue += (this.targetSimValue - this.simValue) * 0.1;
     const s = this.simValue / 100;
-    const w = this.width;
-    const h = this.height;
 
-    this.ctx.clearRect(0, 0, w, h);
+    // Smoothly orbit camera
+    if (this.camState.autoOrbit && !this.camState.isDragging) {
+      this.camState.targetTheta += 0.0022;
+    }
+    this.camState.theta += (this.camState.targetTheta - this.camState.theta) * 0.08;
+    this.camState.phi += (this.camState.targetPhi - this.camState.phi) * 0.08;
+    this.camState.radius += (this.camState.targetRadius - this.camState.radius) * 0.08;
+    this.camState.lookAtX += (this.camState.targetLookAtX - this.camState.lookAtX) * 0.08;
 
-    switch (this.currentStage) {
-      case 1: this.drawStage1(w, h, this.time, s); break;
-      case 2: this.drawStage2(w, h, this.time, s); break;
-      case 3: this.drawStage3(w, h, this.time, s); break;
-      case 4: this.drawStage4(w, h, this.time, s); break;
-      case 5: this.drawStage5(w, h, this.time, s); break;
-      case 6: this.drawStage6(w, h, this.time, s); break;
-      case 7: this.drawStage7(w, h, this.time, s); break;
-      case 8: this.drawStage8(w, h, this.time, s); break;
-      case 9: this.drawStage9(w, h, this.time, s); break;
-      default: this.drawStage10(w, h, this.time, s); break;
+    const cx =
+      this.camState.lookAtX +
+      this.camState.radius * Math.sin(this.camState.phi) * Math.sin(this.camState.theta);
+    const cy = this.camState.radius * Math.cos(this.camState.phi);
+    const cz =
+      this.camState.radius * Math.sin(this.camState.phi) * Math.cos(this.camState.theta);
+
+    this.camera.position.set(cx, cy, cz);
+    this.camera.lookAt(this.camState.lookAtX, 0.1, 0);
+
+    // Ambient particle drift
+    if (this.particleSystem) {
+      this.particleSystem.rotation.y = t * 0.04;
     }
 
-    if (this.pulseEffect > 0.01) {
-      this.ctx.save();
-      this.ctx.strokeStyle = `rgba(16, 185, 129, ${this.pulseEffect})`;
-      this.ctx.lineWidth = 6;
-      this.ctx.strokeRect(3, 3, w - 6, h - 6);
-      this.ctx.restore();
-      this.pulseEffect *= 0.9;
+    // Stage-specific 3D animations driven by time `t` and slider `s`
+    if (this.currentStage === 1) {
+      if (this.actors.tentacles) {
+        this.actors.tentacles.forEach((tp) => {
+          tp.rotation.z = Math.sin(t * 2.2 + tp.userData.phase) * 0.18;
+          tp.rotation.x = Math.cos(t * 1.8 + tp.userData.phase) * 0.14;
+        });
+      }
+      if (this.actors.clownfish) {
+        const cf = this.actors.clownfish;
+        // Slider moves clownfish from open water (-2.1) into anemone (+0.75)
+        cf.position.x = -2.1 + s * 2.85;
+        cf.position.y = 0.65 + Math.sin(t * 3.2) * 0.12;
+        if (cf.userData.tail) cf.userData.tail.rotation.y = Math.sin(t * 10) * 0.35;
+        if (cf.userData.shield) {
+          cf.userData.shield.material.opacity = Math.max(0, (s - 0.5) * 0.55);
+          cf.userData.shield.rotation.y = t;
+        }
+        if (this.pins[0]) this.pins[0].pos.x = cf.position.x;
+      }
+    } else if (this.currentStage === 2) {
+      if (this.actors.shark) {
+        this.actors.shark.position.y = 0.7 + Math.sin(t * 2) * 0.1;
+        if (this.actors.shark.userData.tail) {
+          this.actors.shark.userData.tail.rotation.y = Math.sin(t * 6) * 0.28;
+        }
+      }
+      if (this.actors.remora) {
+        // Slider lifts 3D remora up to lock onto shark belly
+        this.actors.remora.position.y = -1.15 + s * 1.22 + Math.sin(t * 2) * 0.1;
+        if (this.pins[1]) this.pins[1].pos.y = this.actors.remora.position.y - 0.35;
+      }
+    } else if (this.currentStage === 3) {
+      if (this.actors.palmTrunk && this.actors.xrayRing) {
+        // Slider controls 3D X-Ray bark transparency and scanner ring height
+        this.actors.palmTrunk.material.opacity = 1.0 - s * 0.72;
+        this.actors.xrayRing.position.y = -1.1 + s * 3.1;
+      }
+    } else if (this.currentStage === 4) {
+      if (this.actors.rafflesia) {
+        const sc = 0.45 + s * 0.65;
+        this.actors.rafflesia.scale.set(sc, sc, sc);
+      }
+    } else if (this.currentStage === 5) {
+      if (this.actors.wormSegments) {
+        this.actors.wormSegments.forEach((seg, idx) => {
+          seg.position.y = 0.2 + Math.sin(t * 4.5 + idx * 0.45) * (0.12 + s * 0.22);
+          seg.position.z = Math.cos(t * 3.5 + idx * 0.45) * 0.15;
+        });
+      }
+    } else if (this.currentStage === 6) {
+      if (this.actors.crabGroup && this.actors.octo) {
+        this.actors.crabGroup.position.x = -1.6 + s * 1.65;
+        this.actors.octo.position.x = 1.2 + s * 1.8;
+        this.actors.octo.position.y = 0.6 + Math.sin(t * 3) * 0.2;
+      }
+    } else if (this.currentStage === 7) {
+      if (this.actors.crystals) {
+        this.actors.crystals.forEach((cr, i) => {
+          cr.rotation.y = t * 1.2 + i;
+          cr.position.y = 0.35 + Math.sin(t * 2.5 + i) * 0.18;
+        });
+      }
+    } else if (this.currentStage === 8) {
+      if (this.actors.crowdedList) {
+        this.actors.crowdedList.forEach((stem, idx) => {
+          stem.visible = idx < Math.max(3, Math.round(3 + s * 13));
+          stem.scale.y = 1.25 - s * 0.55;
+        });
+      }
+    } else if (this.currentStage === 9) {
+      if (this.actors.owl) {
+        const owl = this.actors.owl;
+        owl.position.x = Math.cos(t * (1.2 + s * 1.5)) * 1.8;
+        owl.position.z = Math.sin(t * (1.2 + s * 1.5)) * 1.2;
+        owl.rotation.y = -t * (1.2 + s * 1.5);
+        const flap = Math.sin(t * 14) * 0.45;
+        owl.userData.leftWing.rotation.x = flap;
+        owl.userData.rightWing.rotation.x = -flap;
+        if (this.pins[0]) {
+          this.pins[0].pos.x = owl.position.x;
+          this.pins[0].pos.z = owl.position.z;
+        }
+      }
+    } else if (this.currentStage === 10) {
+      if (this.actors.gyroRings) {
+        this.actors.gyroRings.forEach((r, i) => {
+          r.rotation.y = t * (0.6 + i * 0.3);
+          r.rotation.z = t * 0.4;
+        });
+      }
+      if (this.actors.gyroSun) {
+        this.actors.gyroSun.rotation.y = -t * 0.8;
+      }
     }
+
+    this.renderer.render(this.scene, this.camera);
+    this.updateProjectedPins();
   }
 }
 

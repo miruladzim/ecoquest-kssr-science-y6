@@ -1,6 +1,6 @@
 // ============================================================================
-// ECOQUEST — INTERACTIVE STEM LAB CONTROLLER (Brilliant.org Style)
-// Manages Segmented Progress, Interactive Sim Slider, Audio, and Mastery Retry
+// ECOQUEST 3D — SPATIAL 3D LAB CONTROLLER
+// Connects Three.js 360° WebGL Stage, Projected 3D Pins, Slider & Mastery Loop
 // ============================================================================
 
 const gameState = {
@@ -22,11 +22,16 @@ const gameState = {
 let ecoSim = null;
 let audioCtx = null;
 
-// Initialize on DOM load
 window.addEventListener("DOMContentLoaded", () => {
-  ecoSim = new EcoSimEngine("sim-canvas");
+  ecoSim = new EcoSimEngine("webgl-stage");
+  if (ecoSim) ecoSim.setLayoutMode(true);
   renderStepSegments();
 });
+
+function set3DCamera(preset) {
+  playSound("click");
+  if (ecoSim) ecoSim.setCameraPreset(preset);
+}
 
 // Synthesized Web Audio UI chimes
 function playSound(type) {
@@ -44,9 +49,9 @@ function playSound(type) {
 
     if (type === "correct") {
       osc.type = "triangle";
-      osc.frequency.setValueAtTime(523.25, now); // C5
-      osc.frequency.setValueAtTime(659.25, now + 0.09); // E5
-      osc.frequency.setValueAtTime(783.99, now + 0.18); // G5
+      osc.frequency.setValueAtTime(523.25, now);
+      osc.frequency.setValueAtTime(659.25, now + 0.09);
+      osc.frequency.setValueAtTime(783.99, now + 0.18);
       gain.gain.setValueAtTime(0.14, now);
       gain.gain.exponentialRampToValueAtTime(0.001, now + 0.42);
       osc.start(now);
@@ -70,7 +75,6 @@ function playSound(type) {
   } catch (_) {}
 }
 
-// Render Brilliant.org-style 10-step segmented top bar
 function renderStepSegments() {
   const container = document.getElementById("step-segments");
   if (!container) return;
@@ -80,7 +84,10 @@ function renderStepSegments() {
     dot.className = "step-dot";
     if (gameState.completedSteps.has(i)) {
       dot.classList.add("done");
-    } else if (i === gameState.currentIndex && document.getElementById("screen-quiz")?.style.display !== "none") {
+    } else if (
+      i === gameState.currentIndex &&
+      document.getElementById("screen-quiz")?.style.display !== "none"
+    ) {
       dot.classList.add("current");
     }
     container.appendChild(dot);
@@ -99,9 +106,13 @@ function updateTopHUD() {
 
 function resetToHome() {
   if ("speechSynthesis" in window) window.speechSynthesis.cancel();
-  document.getElementById("screen-welcome").style.display = "block";
+  document.getElementById("screen-welcome").style.display = "flex";
   document.getElementById("screen-quiz").style.display = "none";
   document.getElementById("screen-summary").style.display = "none";
+  if (ecoSim) {
+    ecoSim.setLayoutMode(true);
+    ecoSim.buildStage(1, 80);
+  }
   renderStepSegments();
 }
 
@@ -123,9 +134,12 @@ function startExpedition() {
 
   document.getElementById("screen-welcome").style.display = "none";
   document.getElementById("screen-summary").style.display = "none";
-  document.getElementById("screen-quiz").style.display = "block";
+  document.getElementById("screen-quiz").style.display = "flex";
 
-  if (ecoSim) ecoSim.resize();
+  if (ecoSim) {
+    ecoSim.setLayoutMode(true);
+    ecoSim.resize();
+  }
   loadCurrentQuestion();
 }
 
@@ -139,7 +153,7 @@ function getActiveQuestion() {
 function handleSimSlider(val) {
   const readout = document.getElementById("sim-val-readout");
   if (readout) readout.textContent = `${val}%`;
-  if (ecoSim) ecoSim.setSimValue(Number(val), false);
+  if (ecoSim) ecoSim.setSimValue(Number(val));
 }
 
 function loadCurrentQuestion() {
@@ -150,7 +164,6 @@ function loadCurrentQuestion() {
   gameState.doubleActive = false;
   updateTopHUD();
 
-  // Top badge
   const codeBadge = document.getElementById("q-code-badge");
   if (codeBadge) {
     codeBadge.textContent = gameState.isRedemptionMode
@@ -158,7 +171,7 @@ function loadCurrentQuestion() {
       : q.code;
   }
 
-  // Interactive Slider Metadata
+  // Interactive 3D Slider Metadata
   const ctrlLabel = document.getElementById("sim-control-label");
   const minLabel = document.getElementById("sim-min-label");
   const maxLabel = document.getElementById("sim-max-label");
@@ -166,37 +179,19 @@ function loadCurrentQuestion() {
   const readout = document.getElementById("sim-val-readout");
 
   const defaultVal = q.simDefault !== undefined ? q.simDefault : 80;
-  if (ctrlLabel) ctrlLabel.textContent = q.simControlLabel || "Interactive Test: Adjust Variable";
+  if (ctrlLabel) ctrlLabel.textContent = q.simControlLabel || "Interactive 3D Variable";
   if (minLabel) minLabel.textContent = q.simMinLabel || "0%";
   if (maxLabel) maxLabel.textContent = q.simMaxLabel || "100%";
   if (slider) slider.value = defaultVal;
   if (readout) readout.textContent = `${defaultVal}%`;
 
-  // Build Interactive Canvas Stage
   if (ecoSim) {
     ecoSim.buildStage(q.id, defaultVal);
   }
 
-  // Species Outcome Pills
-  const tagsBox = document.getElementById("species-tags");
-  if (tagsBox) {
-    tagsBox.innerHTML = (q.tags3D || [])
-      .map(
-        (t) => `
-        <div class="species-pill">
-          <div class="species-name">${t.name}</div>
-          <div class="species-effect" style="color: ${t.color}">${t.effect}</div>
-        </div>
-      `
-      )
-      .join("");
-  }
-
-  // Scenario & Question Prompt
   document.getElementById("q-scenario").textContent = q.scenario;
   document.getElementById("q-prompt").textContent = q.question;
 
-  // Reset Clue & Feedback
   const clueBox = document.getElementById("clue-box");
   if (clueBox) {
     clueBox.style.display = "none";
@@ -207,10 +202,8 @@ function loadCurrentQuestion() {
     fbPanel.className = "feedback-banner";
   }
 
-  // Update Power-Up Buttons
   updatePowerUpButtons();
 
-  // Render Options
   const listEl = document.getElementById("options-list");
   listEl.innerHTML = "";
   q.options.forEach((opt) => {
@@ -274,12 +267,12 @@ function selectAnswer(selectedOpt, btnEl) {
 
     fbPanel.className = "feedback-banner visible correct";
     fbTitle.textContent = "✓ Accurate Scientific Analysis";
-    fbTitle.style.color = "#059669";
+    fbTitle.style.color = "#34d399";
     fbPts.textContent = `+${earned} pts`;
-    fbPts.style.color = "#059669";
+    fbPts.style.color = "#34d399";
     fbText.textContent = selectedOpt.feedback;
 
-    fireConfetti(28);
+    fireConfetti(32);
   } else {
     playSound("wrong");
     btnEl.classList.add("is-wrong");
@@ -288,16 +281,15 @@ function selectAnswer(selectedOpt, btnEl) {
     if (!gameState.isRedemptionMode) {
       gameState.redemptionQueue.push(q);
     } else {
-      // Re-queue at end of redemption list until mastered
       const missed = gameState.redemptionQueue.shift();
       gameState.redemptionQueue.push(missed);
     }
 
     fbPanel.className = "feedback-banner visible review";
     fbTitle.textContent = "↻ Diagnostic Review (Queued for Mastery Retry)";
-    fbTitle.style.color = "#b45309";
+    fbTitle.style.color = "#fbbf24";
     fbPts.textContent = "+0 pts";
-    fbPts.style.color = "#b45309";
+    fbPts.style.color = "#fbbf24";
     fbText.textContent = selectedOpt.feedback;
   }
 
@@ -358,22 +350,21 @@ function updatePowerUpButtons() {
   const bCl = document.getElementById("pu-clue");
 
   if (b50) {
-    b50.textContent = `⚡ 50/50 Filter (${gameState.powerUps["5050"]})`;
+    b50.textContent = `⚡ 50/50 (${gameState.powerUps["5050"]})`;
     b50.disabled = gameState.powerUps["5050"] <= 0;
   }
   if (bDb) {
     bDb.textContent = gameState.doubleActive
       ? "⭐ 2× Active!"
-      : `⭐ 2× Points (${gameState.powerUps.double})`;
+      : `⭐ 2× Pts (${gameState.powerUps.double})`;
     bDb.disabled = gameState.powerUps.double <= 0 || gameState.doubleActive;
   }
   if (bCl) {
-    bCl.textContent = `💡 Field Clue (${gameState.powerUps.clue})`;
+    bCl.textContent = `💡 Clue (${gameState.powerUps.clue})`;
     bCl.disabled = gameState.powerUps.clue <= 0;
   }
 }
 
-// Voice Narration (Web Speech API)
 function toggleAutoVoice() {
   gameState.autoVoice = !gameState.autoVoice;
   const btn = document.getElementById("btn-voice-toggle");
@@ -396,23 +387,22 @@ function narrateCurrentQuestion() {
   window.speechSynthesis.speak(utter);
 }
 
-// Summary Screen
 function showSummaryScreen() {
   if ("speechSynthesis" in window) window.speechSynthesis.cancel();
   document.getElementById("screen-quiz").style.display = "none";
-  document.getElementById("screen-summary").style.display = "block";
+  document.getElementById("screen-summary").style.display = "flex";
+  if (ecoSim) ecoSim.buildStage(10, 80);
 
   const acc = Math.round((gameState.firstTryCorrect / QUESTION_BANK.length) * 100);
   document.getElementById("sum-score").textContent = gameState.score;
   document.getElementById("sum-accuracy").textContent = `${acc}%`;
   document.getElementById("sum-streak").textContent = gameState.bestStreak;
   document.getElementById("sum-subtitle").textContent =
-    `Well done, ${gameState.studentName}! You have verified all 10 KSSR Year 6 Science ecosystem models.`;
+    `Well done, ${gameState.studentName}! You have completed all 10 interactive 3D ecosystem models.`;
 
   fireConfetti(60);
 }
 
-// Minimalist Confetti Burst
 function fireConfetti(count = 35) {
   const canvas = document.getElementById("confetti-canvas");
   if (!canvas) return;
@@ -420,7 +410,7 @@ function fireConfetti(count = 35) {
   canvas.width = window.innerWidth;
   canvas.height = window.innerHeight;
 
-  const colors = ["#10b981", "#4f46e5", "#38bdf8", "#f59e0b"];
+  const colors = ["#10b981", "#38bdf8", "#6366f1", "#f59e0b"];
   const pieces = Array.from({ length: count }, () => ({
     x: canvas.width * 0.5 + (Math.random() - 0.5) * 180,
     y: canvas.height * 0.45,
