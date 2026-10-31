@@ -1,11 +1,10 @@
 // ============================================================================
-// ECOQUEST 3D GAME CONTROLLER, CONFETTI ENGINE & SOUND SYNTHESIZER
-// Pure 3D Student Game Prototype (KSSR Year 6 Science)
+// ECOQUEST 3D — MINIMALIST ASSESSMENT CONTROLLER & AUDIO ENGINE
 // ============================================================================
 
 const gameState = {
-  studentName: "Aiman",
-  avatar: "🐯",
+  studentName: "Aiman Hakimi",
+  role: "Marine",
   soundEnabled: true,
   musicEnabled: false,
   currentIndex: 0,
@@ -29,7 +28,6 @@ const gameState = {
 let eco3d = null;
 let bgmInterval = null;
 
-// Sound & Music Synthesizer (Web Audio API)
 class SoundEngine {
   constructor() {
     this.ctx = null;
@@ -40,7 +38,7 @@ class SoundEngine {
       if (AudioCtx) this.ctx = new AudioCtx();
     }
   }
-  playTone(freq, type = "sine", duration = 0.16, delay = 0, gainVal = 0.14) {
+  playTone(freq, type = "sine", duration = 0.14, delay = 0, gainVal = 0.1) {
     if (!gameState.soundEnabled) return;
     try {
       this.init();
@@ -58,23 +56,21 @@ class SoundEngine {
     } catch (e) {}
   }
   playCorrect() {
-    this.playTone(523.25, "triangle", 0.14, 0, 0.18);
-    this.playTone(659.25, "triangle", 0.14, 0.09, 0.18);
-    this.playTone(783.99, "triangle", 0.18, 0.18, 0.18);
-    this.playTone(1046.5, "sine", 0.35, 0.27, 0.2);
+    this.playTone(523.25, "sine", 0.12, 0, 0.12);
+    this.playTone(659.25, "sine", 0.14, 0.08, 0.12);
+    this.playTone(783.99, "sine", 0.22, 0.16, 0.12);
   }
   playGentleCoaching() {
-    this.playTone(392.0, "sine", 0.2, 0, 0.14);
-    this.playTone(349.23, "sine", 0.28, 0.15, 0.14);
+    this.playTone(392.0, "sine", 0.18, 0, 0.1);
+    this.playTone(349.23, "sine", 0.24, 0.14, 0.1);
   }
   playPowerup() {
-    this.playTone(440, "sine", 0.1, 0, 0.15);
-    this.playTone(659.25, "sine", 0.12, 0.08, 0.15);
-    this.playTone(880, "triangle", 0.22, 0.16, 0.17);
+    this.playTone(587.33, "sine", 0.1, 0, 0.1);
+    this.playTone(880, "sine", 0.18, 0.08, 0.1);
   }
   playVictory() {
-    [523.25, 659.25, 783.99, 1046.5, 783.99, 1046.5].forEach((f, idx) => {
-      this.playTone(f, "triangle", 0.2, idx * 0.11, 0.18);
+    [523.25, 659.25, 783.99, 1046.5].forEach((f, idx) => {
+      this.playTone(f, "sine", 0.2, idx * 0.1, 0.12);
     });
   }
 }
@@ -85,17 +81,18 @@ function toggleAmbientMusic() {
   gameState.musicEnabled = !gameState.musicEnabled;
   const btn = document.getElementById("music-btn");
   if (btn) {
-    btn.innerHTML = gameState.musicEnabled ? "🎵 BGM: ON" : "🎵 BGM: OFF";
+    btn.textContent = gameState.musicEnabled ? "Ambient Audio: On" : "Ambient Audio: Off";
+    btn.classList.toggle("active", gameState.musicEnabled);
   }
   if (gameState.musicEnabled) {
-    const notes = [261.63, 329.63, 392.0, 523.25, 392.0, 329.63];
+    const notes = [261.63, 329.63, 392.0, 493.88];
     let stepIdx = 0;
     bgmInterval = setInterval(() => {
       if (gameState.musicEnabled && gameState.soundEnabled) {
-        soundFX.playTone(notes[stepIdx % notes.length], "sine", 0.35, 0, 0.045);
+        soundFX.playTone(notes[stepIdx % notes.length], "sine", 0.4, 0, 0.03);
         stepIdx++;
       }
-    }, 550);
+    }, 700);
   } else if (bgmInterval) {
     clearInterval(bgmInterval);
     bgmInterval = null;
@@ -106,12 +103,11 @@ function toggleSound() {
   gameState.soundEnabled = !gameState.soundEnabled;
   const btn = document.getElementById("sound-btn");
   if (btn) {
-    btn.innerHTML = gameState.soundEnabled ? "🔊 Sound FX: ON" : "🔇 Sound FX: OFF";
+    btn.textContent = gameState.soundEnabled ? "Sound Effects: On" : "Sound Effects: Off";
+    btn.classList.toggle("active", gameState.soundEnabled);
   }
   if (!gameState.soundEnabled && "speechSynthesis" in window) {
     window.speechSynthesis.cancel();
-  } else {
-    soundFX.playPowerup();
   }
 }
 
@@ -122,59 +118,13 @@ function returnToTitle() {
   document.getElementById("welcome-screen").style.display = "block";
 }
 
-// Celebration Confetti Shower Overlay
-function fireConfetti() {
-  const canvas = document.getElementById("confetti-canvas");
-  if (!canvas) return;
-  const ctx = canvas.getContext("2d");
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
-
-  const colors = ["#4ade80", "#fde047", "#38bdf8", "#f472b6", "#fb923c", "#c084fc"];
-  const pieces = Array.from({ length: 80 }, () => ({
-    x: canvas.width * 0.5 + (Math.random() - 0.5) * 320,
-    y: canvas.height * 0.45,
-    vx: (Math.random() - 0.5) * 14,
-    vy: -Math.random() * 14 - 4,
-    size: 8 + Math.random() * 8,
-    color: colors[Math.floor(Math.random() * colors.length)],
-    rot: Math.random() * Math.PI,
-    vRot: (Math.random() - 0.5) * 0.2
-  }));
-
-  let frame = 0;
-  function step() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    pieces.forEach((p) => {
-      p.x += p.vx;
-      p.y += p.vy;
-      p.vy += 0.42;
-      p.rot += p.vRot;
-      ctx.save();
-      ctx.translate(p.x, p.y);
-      ctx.rotate(p.rot);
-      ctx.fillStyle = p.color;
-      ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size * 0.65);
-      ctx.restore();
-    });
-    frame++;
-    if (frame < 75) {
-      requestAnimationFrame(step);
-    } else {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-    }
-  }
-  step();
+function pickRole(roleName, pillEl) {
+  gameState.role = roleName;
+  document.querySelectorAll(".role-pill").forEach((c) => c.classList.remove("selected"));
+  pillEl.classList.add("selected");
+  soundFX.playTone(540, "sine", 0.06, 0, 0.08);
 }
 
-function pickCharacter(emoji, cardEl) {
-  gameState.avatar = emoji;
-  document.querySelectorAll(".char-card-3d").forEach((c) => c.classList.remove("selected"));
-  cardEl.classList.add("selected");
-  soundFX.playTone(620, "sine", 0.08);
-}
-
-// Launch 3D Game
 function startEcoQuest() {
   const nameInput = document.getElementById("player-name-input");
   if (nameInput && nameInput.value.trim()) {
@@ -218,15 +168,16 @@ function getActiveQuestion() {
 }
 
 function updateHUD() {
-  document.getElementById("hud-player").textContent = `${gameState.avatar} ${gameState.studentName}`;
-  document.getElementById("hud-xp").textContent = `⭐ ${gameState.xp} pts`;
-  document.getElementById("hud-streak").textContent = `🔥 ${gameState.streak} Streak`;
+  document.getElementById("hud-player").textContent = gameState.studentName;
+  document.getElementById("hud-xp").textContent = `${gameState.xp} PTS`;
+  document.getElementById("hud-streak").textContent = `${gameState.streak}`;
 
   const totalQ = QUESTION_BANK.length;
   if (!gameState.isRedemptionPhase) {
-    document.getElementById("hud-level-txt").textContent = `Level ${gameState.currentIndex + 1} / ${totalQ}`;
+    const num = String(gameState.currentIndex + 1).padStart(2, "0");
+    document.getElementById("hud-level-txt").textContent = `${num} / ${totalQ}`;
   } else {
-    document.getElementById("hud-level-txt").textContent = `🛡️ Bonus Retry ${gameState.redemptionIndex + 1} / ${gameState.redemptionQueue.length}`;
+    document.getElementById("hud-level-txt").textContent = `RETRY ${gameState.redemptionIndex + 1} / ${gameState.redemptionQueue.length}`;
   }
 
   const mastered = gameState.initialCorrectCount + gameState.redeemedCorrectCount;
@@ -238,13 +189,13 @@ function updateHUD() {
   const btn2x = document.getElementById("pu-2x");
   const btnHint = document.getElementById("pu-hint");
 
-  btn50.innerHTML = `✂️ 50/50 (${gameState.powerups.fiftyFifty})`;
+  btn50.textContent = `50/50 Filter (${gameState.powerups.fiftyFifty})`;
   btn50.disabled = gameState.powerups.fiftyFifty <= 0 || gameState.answeredCurrent;
 
-  btn2x.innerHTML = `⚡ 2x Points (${gameState.powerups.doubleXp})`;
+  btn2x.textContent = `2× Multiplier (${gameState.powerups.doubleXp})`;
   btn2x.disabled = gameState.powerups.doubleXp <= 0 || gameState.answeredCurrent || gameState.activeDoubleXp;
 
-  btnHint.innerHTML = `💡 Tiger Hint (${gameState.powerups.hint})`;
+  btnHint.textContent = `Field Clue (${gameState.powerups.hint})`;
   btnHint.disabled = gameState.powerups.hint <= 0 || gameState.answeredCurrent;
 }
 
@@ -263,46 +214,42 @@ function renderCurrentLevel() {
   }
 
   document.getElementById("diorama-topic-pill").textContent = gameState.isRedemptionPhase
-    ? `🛡️ BONUS RETRY: ${q.category}`
-    : `🌿 Level ${q.id}: ${q.category}`;
+    ? `REDEMPTION REVIEW // ${q.category.toUpperCase()}`
+    : q.code;
 
-  document.getElementById("diorama-interact-hint").textContent = "🔄 Drag to Spin 3D World • Click Animals to Bounce!";
+  document.getElementById("diorama-interact-hint").textContent = "360° Model · Drag to Orbit";
 
   const tagsRow = document.getElementById("tags-3d-container");
   tagsRow.innerHTML = "";
   (q.tags3D || []).forEach((t) => {
     const div = document.createElement("div");
-    div.className = "tag-3d-chip";
-    div.style.borderColor = t.color;
+    div.className = "specimen-chip";
     div.innerHTML = `
-      <span class="tag-3d-icon">${t.icon}</span>
-      <div>
-        <div class="tag-3d-name">${t.name}</div>
-        <div class="tag-3d-effect" style="color:${t.color};">${t.effect}</div>
-      </div>
+      <div class="specimen-name">${t.name}</div>
+      <div class="specimen-role" style="color:${t.color};">${t.effect}</div>
     `;
     tagsRow.appendChild(div);
   });
 
-  document.getElementById("mascot-speech").innerHTML = `<strong>Prof. Rimba 🐯:</strong> "${q.scenario}"`;
+  document.getElementById("mascot-speech").textContent = q.scenario;
   document.getElementById("question-title").textContent = q.question;
 
   const answersGrid = document.getElementById("answers-container");
   answersGrid.innerHTML = "";
   q.options.forEach((opt) => {
     const btn = document.createElement("button");
-    btn.className = `answer-tile-3d tile-${opt.id}`;
+    btn.className = "option-item";
     btn.id = `ans-tile-${opt.id}`;
     btn.onclick = () => selectAnswer(opt.id);
     btn.innerHTML = `
-      <span class="tile-badge">${opt.id}</span>
+      <span class="option-key">${opt.id}</span>
       <span>${opt.text}</span>
     `;
     answersGrid.appendChild(btn);
   });
 
   const fb = document.getElementById("feedback-popup");
-  fb.className = "feedback-popup-3d";
+  fb.className = "feedback-card";
   fb.innerHTML = "";
 }
 
@@ -316,7 +263,6 @@ function useFiftyFifty() {
   });
   gameState.powerups.fiftyFifty--;
   soundFX.playPowerup();
-  document.getElementById("mascot-speech").innerHTML = `<strong>Prof. Rimba 🐯:</strong> "✂️ I removed 2 wrong answers for you! Pick from the remaining 2!"`;
   updateHUD();
 }
 
@@ -325,7 +271,6 @@ function useDoublePoints() {
   gameState.activeDoubleXp = true;
   gameState.powerups.doubleXp--;
   soundFX.playPowerup();
-  document.getElementById("mascot-speech").innerHTML = `<strong>Prof. Rimba 🐯:</strong> "⚡ 2x DOUBLE POINTS activated for this question!"`;
   updateHUD();
 }
 
@@ -334,20 +279,18 @@ function useTigerHint() {
   const q = getActiveQuestion();
   gameState.powerups.hint--;
   soundFX.playPowerup();
-  document.getElementById("mascot-speech").innerHTML = `<strong>💡 Tiger Hint 🐯:</strong> <span style="color:#fef08a;">"${q.clue}"</span>`;
-  if (eco3d) eco3d.triggerCelebration();
+  document.getElementById("mascot-speech").textContent = `Field Clue: ${q.clue}`;
   updateHUD();
 }
 
 function speakCurrentQuestion() {
   const q = getActiveQuestion();
   if (!q) return;
-  soundFX.playTone(640, "sine", 0.1);
+  soundFX.playTone(600, "sine", 0.08);
   if ("speechSynthesis" in window) {
     window.speechSynthesis.cancel();
     const utter = new SpeechSynthesisUtterance(q.audioScript);
     utter.rate = 0.98;
-    utter.pitch = 1.05;
     window.speechSynthesis.speak(utter);
   }
 }
@@ -365,9 +308,9 @@ function selectAnswer(optId) {
     if (!btn) return;
     btn.disabled = true;
     if (opt.isCorrect) {
-      btn.classList.add("correct-glow");
+      btn.classList.add("state-correct");
     } else if (opt.id === optId && !opt.isCorrect) {
-      btn.classList.add("wrong-dim");
+      btn.classList.add("state-wrong");
     }
   });
 
@@ -375,13 +318,12 @@ function selectAnswer(optId) {
 
   if (chosen.isCorrect) {
     soundFX.playCorrect();
-    fireConfetti();
     if (eco3d) eco3d.triggerCelebration();
 
     gameState.streak++;
     if (gameState.streak > gameState.maxStreak) gameState.maxStreak = gameState.streak;
 
-    const pts = ((q.id === 10 ? 250 : 100) + gameState.streak * 20) * (gameState.activeDoubleXp ? 2 : 1);
+    const pts = ((q.id === 10 ? 250 : 100) + gameState.streak * 15) * (gameState.activeDoubleXp ? 2 : 1);
     gameState.xp += pts;
 
     if (!gameState.isRedemptionPhase) {
@@ -390,21 +332,21 @@ function selectAnswer(optId) {
       gameState.redeemedCorrectCount++;
     }
 
-    fb.className = "feedback-popup-3d show good";
+    fb.className = "feedback-card visible correct";
     fb.innerHTML = `
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
-        <span style="font-size:1.1rem;font-weight:900;color:#6ee7b7;">🎉 AWESOME! YOU GOT IT!</span>
-        <span style="font-size:1.05rem;font-weight:900;color:#fde047;">+${pts} pts!</span>
+      <div class="feedback-top">
+        <span style="color:var(--accent);">Verified · ${q.category}</span>
+        <span style="color:var(--text-primary);">+${pts} PTS</span>
       </div>
-      <p style="font-size:0.95rem;color:#ffffff;margin-bottom:12px;">${chosen.feedback}</p>
-      <button class="btn-3d btn-3d-green" style="width:100%;font-size:1.05rem;" onclick="nextStage()">
-        Next 3D Level ▶
+      <p class="feedback-text">${chosen.feedback}</p>
+      <button class="primary-btn" onclick="nextStage()">
+        Continue →
       </button>
     `;
   } else {
     soundFX.playGentleCoaching();
     gameState.streak = 0;
-    gameState.xp += 25;
+    gameState.xp += 20;
 
     if (!gameState.isRedemptionPhase) {
       if (!gameState.redemptionQueue.includes(q.id)) {
@@ -412,16 +354,16 @@ function selectAnswer(optId) {
       }
     }
 
-    fb.className = "feedback-popup-3d show retry";
+    fb.className = "feedback-card visible review";
     fb.innerHTML = `
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
-        <span style="font-size:1.05rem;font-weight:900;color:#fde047;">🐯 ALMOST! LET'S LEARN WHY:</span>
-        <span style="font-size:0.9rem;font-weight:800;color:#bae6fd;">🛡️ Saved for Bonus Retry!</span>
+      <div class="feedback-top">
+        <span style="color:var(--amber);">Concept Review</span>
+        <span style="color:var(--text-secondary);">Queued for Redemption</span>
       </div>
-      <p style="font-size:0.93rem;color:#fef3c7;margin-bottom:6px;">${chosen.feedback}</p>
-      <p style="font-size:0.9rem;color:#6ee7b7;font-weight:800;margin-bottom:12px;">✔ Correct Answer (${correct.id}): ${correct.text}</p>
-      <button class="btn-3d btn-3d-blue" style="width:100%;font-size:1.05rem;" onclick="nextStage()">
-        Got It! Next Level ▶
+      <p class="feedback-text" style="margin-bottom:8px;">${chosen.feedback}</p>
+      <p class="feedback-text" style="color:var(--text-primary);font-weight:500;">Correct Response (${correct.id}): ${correct.text}</p>
+      <button class="primary-btn" onclick="nextStage()">
+        Continue →
       </button>
     `;
   }
@@ -456,7 +398,6 @@ function nextStage() {
 
 function showVictoryScreen() {
   soundFX.playVictory();
-  fireConfetti();
   document.getElementById("arena-screen").style.display = "none";
   document.getElementById("victory-screen").style.display = "block";
 
@@ -464,8 +405,8 @@ function showVictoryScreen() {
   const prePct = Math.round((gameState.initialCorrectCount / total) * 100);
   const postPct = Math.round(((gameState.initialCorrectCount + gameState.redeemedCorrectCount) / total) * 100);
 
-  document.getElementById("vic-title").textContent = `🏆 Congratulations, ${gameState.avatar} ${gameState.studentName}!`;
-  document.getElementById("vic-xp").textContent = `${gameState.xp} pts`;
+  document.getElementById("vic-title").textContent = `${gameState.studentName} — Assessment Complete`;
+  document.getElementById("vic-xp").textContent = `${gameState.xp}`;
   document.getElementById("vic-pre").textContent = `${prePct}%`;
   document.getElementById("vic-post").textContent = `${postPct}%`;
 }

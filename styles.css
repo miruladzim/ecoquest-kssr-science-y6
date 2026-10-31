@@ -1,41 +1,51 @@
 /* ==========================================================================
-   ECOQUEST 3D: WILDLIFE RESCUE!
-   Kid-Friendly 3D Interactive Game UI (Three.js + Tactile 3D Arcade Buttons)
+   ECOQUEST 3D — MINIMALIST INTERACTIVE 3D SCIENCE PROTOTYPE
+   Clean Glassmorphism, Crisp Typography & Distraction-Free Layout
    ========================================================================== */
 
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap');
+
 :root {
-  --bg-sky-top: #071930;
-  --bg-sky-bottom: #0d3b52;
-  --card-bg: rgba(15, 34, 58, 0.92);
-  --card-border: rgba(125, 211, 252, 0.35);
-  --green-main: #22c55e;
-  --green-shadow: #15803d;
-  --blue-main: #0ea5e9;
-  --blue-shadow: #0369a1;
-  --amber-main: #f59e0b;
-  --amber-shadow: #b45309;
-  --purple-main: #a855f7;
-  --purple-shadow: #6b21a8;
-  --coral-main: #f43f5e;
-  --coral-shadow: #be123c;
+  --bg-base: #080c14;
+  --bg-surface: rgba(15, 23, 36, 0.78);
+  --bg-surface-hover: rgba(24, 35, 54, 0.88);
+  --bg-elevated: rgba(22, 32, 48, 0.92);
+  --border-hairline: rgba(255, 255, 255, 0.08);
+  --border-subtle: rgba(255, 255, 255, 0.14);
+  --border-focus: rgba(16, 185, 129, 0.55);
+  --text-primary: #f8fafc;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+  --accent: #10b981;
+  --accent-soft: rgba(16, 185, 129, 0.12);
+  --sky: #38bdf8;
+  --amber: #f59e0b;
+  --danger: #f43f5e;
+  --radius-xl: 20px;
+  --radius-lg: 14px;
+  --radius-md: 10px;
+  --radius-sm: 8px;
 }
 
 * {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
-  user-select: none;
 }
 
 body {
-  font-family: 'Segoe UI', 'Fredoka', 'Nunito', system-ui, -apple-system, sans-serif;
-  background: radial-gradient(circle at 50% 0%, #164e63 0%, #091e36 55%, #040d1a 100%);
-  color: #ffffff;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  background-color: var(--bg-base);
+  background-image:
+    radial-gradient(circle at 20% 0%, rgba(16, 185, 129, 0.08) 0%, transparent 45%),
+    radial-gradient(circle at 80% 100%, rgba(56, 189, 248, 0.07) 0%, transparent 45%);
+  color: var(--text-primary);
   min-height: 100vh;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
   overflow-x: hidden;
 }
 
-/* Confetti Canvas Overlay */
 #confetti-canvas {
   position: fixed;
   inset: 0;
@@ -45,374 +55,377 @@ body {
   z-index: 999;
 }
 
-/* Top Arcade Header */
-.arcade-topbar {
+/* ==========================================================================
+   MINIMALIST TOP NAVIGATION BAR
+   ========================================================================== */
+.topbar {
+  height: 64px;
+  padding: 0 32px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 12px;
-  padding: 12px 24px;
-  background: rgba(8, 22, 40, 0.9);
-  backdrop-filter: blur(12px);
-  border-bottom: 3px solid rgba(56, 189, 248, 0.3);
+  border-bottom: 1px solid var(--border-hairline);
+  background: rgba(8, 12, 20, 0.82);
+  backdrop-filter: blur(16px);
   position: sticky;
   top: 0;
   z-index: 100;
 }
 
-.game-logo {
+.brand {
   display: flex;
   align-items: center;
   gap: 12px;
   cursor: pointer;
 }
 
-.logo-3d-badge {
-  width: 48px;
-  height: 48px;
-  border-radius: 14px;
-  background: linear-gradient(135deg, #34d399, #059669);
-  box-shadow: 0 5px 0 #065f46, 0 0 20px rgba(52, 211, 153, 0.45);
+.brand-mark {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: var(--accent-soft);
+  border: 1px solid rgba(16, 185, 129, 0.4);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 26px;
-  animation: floatBob 3s ease-in-out infinite;
-}
-
-@keyframes floatBob {
-  0%, 100% { transform: translateY(0px) rotate(0deg); }
-  50% { transform: translateY(-4px) rotate(3deg); }
-}
-
-.logo-text-main {
-  font-size: 1.3rem;
-  font-weight: 900;
-  letter-spacing: 0.02em;
-  text-shadow: 0 3px 0 rgba(0, 0, 0, 0.5);
-  background: linear-gradient(90deg, #ffffff, #6ee7b7, #fde047);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
-
-.logo-text-sub {
-  font-size: 0.8rem;
-  color: #7dd3fc;
+  color: var(--accent);
+  font-family: 'Space Grotesk', sans-serif;
   font-weight: 700;
+  font-size: 0.9rem;
 }
 
-.top-actions {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
+.brand-name {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--text-primary);
 }
 
-/* Tactile 3D Button Base */
-.btn-3d {
-  border: none;
-  border-radius: 14px;
-  padding: 10px 18px;
-  font-size: 0.92rem;
-  font-weight: 800;
-  color: #ffffff;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  transition: transform 0.12s ease, box-shadow 0.12s ease, filter 0.15s ease;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
-}
-
-.btn-3d:hover:not(:disabled) {
-  filter: brightness(1.1);
-  transform: translateY(-2px);
-}
-
-.btn-3d:active:not(:disabled) {
-  transform: translateY(4px);
-}
-
-.btn-3d-green {
-  background: linear-gradient(180deg, #4ade80, #16a34a);
-  box-shadow: 0 5px 0 #14532d, 0 8px 18px rgba(34, 197, 94, 0.35);
-}
-
-.btn-3d-blue {
-  background: linear-gradient(180deg, #38bdf8, #0284c7);
-  box-shadow: 0 5px 0 #0c4a6e, 0 8px 18px rgba(14, 165, 233, 0.35);
-}
-
-.btn-3d-amber {
-  background: linear-gradient(180deg, #fbbf24, #d97706);
-  box-shadow: 0 5px 0 #78350f, 0 8px 18px rgba(245, 158, 11, 0.35);
-}
-
-.btn-3d-purple {
-  background: linear-gradient(180deg, #c084fc, #7e22ce);
-  box-shadow: 0 5px 0 #4c1d95, 0 8px 18px rgba(168, 85, 247, 0.35);
-}
-
-.btn-3d:disabled {
-  opacity: 0.45;
-  filter: grayscale(0.6);
-  cursor: not-allowed;
-  transform: none;
-}
-
-/* Main Wrapper */
-.game-wrapper {
-  max-width: 1220px;
-  margin: 0 auto;
-  padding: 20px 18px 50px;
-}
-
-/* ==========================================================================
-   START / WELCOME POPUP OVERLAY ON TOP OF LIVE 3D WORLD
-   ========================================================================== */
-.welcome-modal-backdrop {
-  background: linear-gradient(145deg, rgba(13, 33, 58, 0.96), rgba(7, 20, 38, 0.98));
-  border: 3px solid rgba(56, 189, 248, 0.5);
-  border-radius: 26px;
-  padding: 32px;
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.75);
-  max-width: 780px;
-  margin: 12px auto;
-  text-align: center;
-  animation: popScale 0.35s cubic-bezier(0.18, 0.89, 0.32, 1.28);
-}
-
-@keyframes popScale {
-  from { opacity: 0; transform: scale(0.9); }
-  to { opacity: 1; transform: scale(1); }
-}
-
-.welcome-badge {
-  display: inline-block;
-  background: rgba(52, 211, 153, 0.2);
-  border: 2px solid #34d399;
-  color: #a7f3d0;
-  font-weight: 800;
-  font-size: 0.85rem;
-  padding: 6px 16px;
-  border-radius: 999px;
-  margin-bottom: 12px;
-}
-
-.welcome-title {
-  font-size: 2.3rem;
-  font-weight: 900;
-  line-height: 1.15;
-  margin-bottom: 10px;
-  text-shadow: 0 4px 0 rgba(0, 0, 0, 0.45);
-}
-
-.welcome-sub {
-  font-size: 1.05rem;
-  color: #bae6fd;
-  max-width: 580px;
-  margin: 0 auto 22px;
-}
-
-.char-picker-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 12px;
-  margin: 14px 0 22px;
+.brand-tag {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  padding-left: 10px;
+  border-left: 1px solid var(--border-hairline);
 }
 
 @media (max-width: 640px) {
-  .char-picker-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
+  .brand-tag { display: none; }
+  .topbar { padding: 0 16px; }
 }
 
-.char-card-3d {
-  background: rgba(30, 58, 95, 0.85);
-  border: 3px solid rgba(148, 163, 184, 0.3);
-  border-radius: 18px;
-  padding: 14px 10px;
+.topbar-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.icon-btn {
+  background: transparent;
+  border: 1px solid var(--border-hairline);
+  color: var(--text-secondary);
+  padding: 7px 13px;
+  border-radius: var(--radius-sm);
+  font-size: 0.78rem;
+  font-weight: 500;
   cursor: pointer;
-  transition: all 0.2s ease;
-  box-shadow: 0 6px 0 rgba(0, 0, 0, 0.35);
+  transition: all 0.18s ease;
 }
 
-.char-card-3d:hover {
-  transform: translateY(-4px);
-  border-color: #7dd3fc;
+.icon-btn:hover {
+  border-color: var(--border-subtle);
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.03);
 }
 
-.char-card-3d.selected {
-  background: linear-gradient(180deg, rgba(16, 185, 129, 0.35), rgba(5, 150, 105, 0.45));
-  border-color: #4ade80;
-  box-shadow: 0 6px 0 #065f46, 0 0 22px rgba(74, 222, 128, 0.4);
-  transform: translateY(-4px) scale(1.03);
-}
-
-.char-emoji {
-  font-size: 2.6rem;
-  display: block;
-  margin-bottom: 6px;
-  animation: floatBob 2.4s ease-in-out infinite;
-}
-
-.char-name {
-  font-weight: 800;
-  font-size: 0.92rem;
-  color: #ffffff;
-}
-
-.name-box-input {
-  width: 100%;
-  max-width: 380px;
-  padding: 13px 18px;
-  border-radius: 14px;
-  border: 2px solid #38bdf8;
-  background: rgba(7, 17, 30, 0.9);
-  color: #ffffff;
-  font-size: 1.05rem;
-  font-weight: 700;
-  text-align: center;
-  margin-bottom: 20px;
-}
-
-.giant-play-btn {
-  font-size: 1.3rem;
-  padding: 16px 42px;
-  border-radius: 18px;
-  background: linear-gradient(180deg, #4ade80, #16a34a);
-  box-shadow: 0 8px 0 #14532d, 0 12px 30px rgba(34, 197, 94, 0.5);
-  animation: pulseGlow 2s infinite;
-}
-
-@keyframes pulseGlow {
-  0%, 100% { box-shadow: 0 8px 0 #14532d, 0 0 20px rgba(74, 222, 128, 0.4); }
-  50% { box-shadow: 0 8px 0 #14532d, 0 0 35px rgba(74, 222, 128, 0.85); }
+.icon-btn.active {
+  border-color: rgba(16, 185, 129, 0.4);
+  color: var(--accent);
+  background: var(--accent-soft);
 }
 
 /* ==========================================================================
-   3D GAMEPLAY HUD & STAGE LAYOUT
+   MAIN CONTAINER
    ========================================================================== */
-.hud-strip {
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 28px 24px 56px;
+}
+
+/* ==========================================================================
+   WELCOME / ONBOARDING CARD (MINIMALIST)
+   ========================================================================== */
+.onboarding-card {
+  max-width: 580px;
+  margin: 40px auto 0;
+  background: var(--bg-surface);
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-xl);
+  padding: 40px;
+  box-shadow: 0 24px 48px -12px rgba(0, 0, 0, 0.6);
+}
+
+.eyebrow {
+  display: inline-block;
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--accent);
+  background: var(--accent-soft);
+  padding: 4px 10px;
+  border-radius: 999px;
+  margin-bottom: 16px;
+}
+
+.onboarding-title {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 1.85rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  margin-bottom: 10px;
+}
+
+.onboarding-desc {
+  font-size: 0.92rem;
+  color: var(--text-secondary);
+  margin-bottom: 28px;
+}
+
+.field-label {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+
+.clean-input {
+  width: 100%;
+  padding: 12px 14px;
+  background: rgba(8, 12, 20, 0.65);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  font-size: 0.92rem;
+  font-family: inherit;
+  margin-bottom: 20px;
+  transition: border-color 0.18s ease;
+}
+
+.clean-input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.role-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin-bottom: 28px;
+}
+
+@media (max-width: 520px) {
+  .role-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+.role-pill {
+  background: rgba(8, 12, 20, 0.55);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-md);
+  padding: 11px 8px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+.role-pill:hover {
+  border-color: var(--border-subtle);
+}
+
+.role-pill.selected {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.role-code {
+  display: block;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--accent);
+  margin-bottom: 2px;
+}
+
+.role-title {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.primary-btn {
+  width: 100%;
+  padding: 13px 20px;
+  border: none;
+  border-radius: var(--radius-md);
+  background: var(--accent);
+  color: #04130d;
+  font-size: 0.92rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.18s ease, transform 0.12s ease;
+}
+
+.primary-btn:hover {
+  opacity: 0.92;
+  transform: translateY(-1px);
+}
+
+.primary-btn:active {
+  transform: translateY(0);
+}
+
+/* ==========================================================================
+   MINIMALIST HUD BAR
+   ========================================================================== */
+.hud-bar {
   display: flex;
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
-  gap: 12px;
-  background: var(--card-bg);
-  border: 2px solid var(--card-border);
-  border-radius: 20px;
-  padding: 12px 20px;
-  margin-bottom: 18px;
-  box-shadow: 0 8px 0 rgba(0, 0, 0, 0.35);
+  gap: 16px;
+  padding: 14px 20px;
+  background: var(--bg-surface);
+  backdrop-filter: blur(16px);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-lg);
+  margin-bottom: 20px;
 }
 
-.hud-pill {
+.hud-metrics {
   display: flex;
   align-items: center;
-  gap: 8px;
-  background: rgba(7, 18, 34, 0.85);
-  border: 2px solid rgba(148, 163, 184, 0.25);
-  padding: 8px 16px;
-  border-radius: 14px;
-  font-weight: 800;
-  font-size: 1rem;
+  gap: 24px;
+  flex-wrap: wrap;
 }
 
-.progress-track-wrap {
+.metric-item {
+  display: flex;
+  flex-direction: column;
+}
+
+.metric-label {
+  font-size: 0.68rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--text-muted);
+}
+
+.metric-val {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.hud-progress {
   flex: 1;
   min-width: 200px;
-  max-width: 340px;
+  max-width: 320px;
 }
 
-.progress-label-row {
+.hud-progress-head {
   display: flex;
   justify-content: space-between;
-  font-size: 0.82rem;
-  font-weight: 800;
-  color: #6ee7b7;
-  margin-bottom: 5px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 6px;
 }
 
-.progress-bar-outer {
-  height: 14px;
-  background: rgba(0, 0, 0, 0.45);
+.hud-progress-track {
+  height: 6px;
+  background: rgba(255, 255, 255, 0.06);
   border-radius: 999px;
-  border: 2px solid rgba(52, 211, 153, 0.4);
   overflow: hidden;
 }
 
-.progress-bar-inner {
+.hud-progress-fill {
   height: 100%;
-  background: linear-gradient(90deg, #34d399, #fde047);
+  background: var(--accent);
   border-radius: 999px;
-  transition: width 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition: width 0.4s ease;
 }
 
-/* Main 2-Column 3D Arena */
-.play-grid-3d {
+/* ==========================================================================
+   2-COLUMN WORKSPACE: 3D VIEWPORT + QUESTION PANEL
+   ========================================================================== */
+.workspace-grid {
   display: grid;
   grid-template-columns: 1.15fr 1fr;
   gap: 20px;
   align-items: stretch;
 }
 
-@media (max-width: 940px) {
-  .play-grid-3d {
+@media (max-width: 920px) {
+  .workspace-grid {
     grid-template-columns: 1fr;
   }
 }
 
-/* Left: Interactive 3D WebGL Viewport Card */
-.diorama-card-3d {
-  background: radial-gradient(circle at 50% 35%, #153e5c 0%, #091d34 75%, #051120 100%);
-  border: 3px solid rgba(56, 189, 248, 0.45);
-  border-radius: 24px;
+/* Left: Interactive 3D Viewport */
+.viewport-card {
   position: relative;
-  min-height: 460px;
+  min-height: 480px;
+  background: radial-gradient(circle at 50% 40%, #111c2d 0%, #090e17 100%);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-xl);
+  overflow: hidden;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  overflow: hidden;
-  box-shadow: 0 12px 0 rgba(4, 12, 24, 0.7), 0 20px 40px rgba(0, 0, 0, 0.5);
 }
 
-.diorama-top-overlay {
+.viewport-header {
   position: relative;
   z-index: 10;
-  padding: 16px 18px 0;
+  padding: 18px 20px 0;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  flex-wrap: wrap;
-  gap: 8px;
   pointer-events: none;
 }
 
-.level-topic-pill {
-  background: rgba(16, 185, 129, 0.25);
-  border: 2px solid #34d399;
-  color: #a7f3d0;
-  font-weight: 900;
-  font-size: 0.85rem;
-  padding: 6px 14px;
-  border-radius: 999px;
-  backdrop-filter: blur(6px);
-}
-
-.spin-hint-pill {
-  background: rgba(15, 23, 42, 0.8);
-  border: 1.5px solid #38bdf8;
-  color: #e0f2fe;
-  font-size: 0.8rem;
-  font-weight: 700;
+.biome-tag {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--accent);
+  background: rgba(8, 12, 20, 0.75);
+  border: 1px solid rgba(16, 185, 129, 0.3);
   padding: 5px 12px;
-  border-radius: 999px;
+  border-radius: 6px;
+  backdrop-filter: blur(8px);
 }
 
-.canvas-holder {
+.orbit-hint {
+  font-size: 0.74rem;
+  color: var(--text-secondary);
+  background: rgba(8, 12, 20, 0.7);
+  border: 1px solid var(--border-hairline);
+  padding: 5px 10px;
+  border-radius: 6px;
+}
+
+.canvas-stage {
   position: absolute;
   inset: 0;
   width: 100%;
@@ -420,7 +433,7 @@ body {
   cursor: grab;
 }
 
-.canvas-holder:active {
+.canvas-stage:active {
   cursor: grabbing;
 }
 
@@ -430,268 +443,250 @@ body {
   display: block;
 }
 
-/* Floating 3D Species Callout Pills at bottom of 3D Stage */
-.diorama-bottom-overlay {
+.viewport-footer {
   position: relative;
   z-index: 10;
-  padding: 14px 18px;
-  background: linear-gradient(0deg, rgba(5, 15, 28, 0.92) 0%, transparent 100%);
+  padding: 16px 20px;
+  background: linear-gradient(0deg, rgba(8, 12, 20, 0.92) 0%, transparent 100%);
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
 }
 
-.tags-3d-row {
+.specimen-tags {
   display: flex;
   gap: 10px;
   flex-wrap: wrap;
 }
 
-.tag-3d-chip {
+.specimen-chip {
   flex: 1;
-  min-width: 165px;
-  background: rgba(15, 23, 42, 0.88);
-  border: 2px solid #38bdf8;
-  border-radius: 14px;
-  padding: 8px 12px;
+  min-width: 160px;
+  background: rgba(15, 23, 36, 0.85);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 9px 12px;
+  backdrop-filter: blur(10px);
+}
+
+.specimen-name {
+  font-size: 0.74rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.specimen-role {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.84rem;
+  font-weight: 600;
+  margin-top: 2px;
+}
+
+.viewport-actions {
   display: flex;
+  justify-content: space-between;
   align-items: center;
-  gap: 10px;
-  backdrop-filter: blur(8px);
-  animation: floatBob 3.2s ease-in-out infinite;
+  gap: 8px;
 }
 
-.tag-3d-icon {
-  font-size: 1.65rem;
-}
-
-.tag-3d-name {
-  font-size: 0.8rem;
-  color: #cbd5e1;
-  font-weight: 700;
-}
-
-.tag-3d-effect {
-  font-size: 0.92rem;
-  font-weight: 900;
-}
-
-/* Right: Question, Mascot Helper & 4 Big 3D Arcade Buttons */
-.quiz-card-3d {
-  background: var(--card-bg);
-  border: 3px solid var(--card-border);
-  border-radius: 24px;
-  padding: 22px;
+/* Right: Minimalist Question & Options Panel */
+.question-card {
+  background: var(--bg-surface);
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-xl);
+  padding: 26px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  box-shadow: 0 12px 0 rgba(4, 12, 24, 0.7), 0 20px 40px rgba(0, 0, 0, 0.5);
 }
 
-/* Prof. Rimba Mascot Speech Bar */
-.mascot-helper-bar {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  background: rgba(14, 165, 233, 0.14);
-  border: 2px solid rgba(56, 189, 248, 0.4);
-  border-radius: 18px;
+.context-box {
   padding: 12px 14px;
-  margin-bottom: 14px;
+  background: rgba(255, 255, 255, 0.025);
+  border-left: 2px solid var(--accent);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  font-size: 0.86rem;
+  color: var(--text-secondary);
+  margin-bottom: 16px;
 }
 
-.mascot-avatar-3d {
-  width: 52px;
-  height: 52px;
-  min-width: 52px;
-  border-radius: 16px;
-  background: linear-gradient(135deg, #fbbf24, #ea580c);
-  box-shadow: 0 4px 0 #9a3412;
+.powerups-strip {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 30px;
-  animation: floatBob 2.2s ease-in-out infinite;
+  gap: 8px;
+  margin-bottom: 18px;
 }
 
-.mascot-speech-text {
-  font-size: 0.92rem;
-  color: #e0f2fe;
+.tool-pill {
+  flex: 1;
+  background: rgba(8, 12, 20, 0.55);
+  border: 1px solid var(--border-hairline);
+  color: var(--text-secondary);
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  font-size: 0.76rem;
   font-weight: 600;
-  line-height: 1.38;
+  cursor: pointer;
+  transition: all 0.16s ease;
 }
 
-.question-big-title {
-  font-size: 1.28rem;
-  font-weight: 900;
-  color: #ffffff;
-  margin-bottom: 14px;
-  line-height: 1.3;
+.tool-pill:hover:not(:disabled) {
+  border-color: var(--border-subtle);
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.04);
 }
 
-/* Power-Ups Row */
-.powerup-arcade-row {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
-  margin-bottom: 14px;
+.tool-pill:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
 }
 
-/* 4 Big 3D Color Answer Buttons */
-.answers-grid-3d {
+.question-heading {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 16px;
+  line-height: 1.35;
+}
+
+.options-stack {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
 }
 
-.answer-tile-3d {
+.option-item {
   width: 100%;
   text-align: left;
-  border: none;
-  border-radius: 16px;
-  padding: 15px 18px;
-  color: #ffffff;
-  font-size: 1rem;
-  font-weight: 800;
+  background: rgba(8, 12, 20, 0.6);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-md);
+  padding: 13px 15px;
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 0.88rem;
+  font-weight: 500;
   cursor: pointer;
   display: flex;
-  align-items: center;
-  gap: 14px;
-  transition: transform 0.12s ease, filter 0.15s ease;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+  align-items: flex-start;
+  gap: 12px;
+  transition: all 0.16s ease;
 }
 
-.answer-tile-3d:hover:not(:disabled) {
-  filter: brightness(1.1);
-  transform: translateY(-2px);
+.option-item:hover:not(:disabled) {
+  border-color: var(--border-subtle);
+  background: var(--bg-surface-hover);
 }
 
-.answer-tile-3d:active:not(:disabled) {
-  transform: translateY(5px);
-}
-
-.tile-A {
-  background: linear-gradient(180deg, #38bdf8, #0284c7);
-  box-shadow: 0 6px 0 #075985;
-}
-
-.tile-B {
-  background: linear-gradient(180deg, #4ade80, #16a34a);
-  box-shadow: 0 6px 0 #14532d;
-}
-
-.tile-C {
-  background: linear-gradient(180deg, #fbbf24, #d97706);
-  box-shadow: 0 6px 0 #92400e;
-}
-
-.tile-D {
-  background: linear-gradient(180deg, #c084fc, #9333ea);
-  box-shadow: 0 6px 0 #581c87;
-}
-
-.tile-badge {
-  width: 34px;
-  height: 34px;
-  min-width: 34px;
-  border-radius: 10px;
-  background: rgba(0, 0, 0, 0.28);
+.option-key {
+  min-width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--border-hairline);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1rem;
-  font-weight: 900;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-secondary);
 }
 
-.answer-tile-3d.eliminated {
-  opacity: 0.22;
+.option-item.eliminated {
+  opacity: 0.25;
   pointer-events: none;
-  filter: grayscale(1);
+  text-decoration: line-through;
 }
 
-.answer-tile-3d.correct-glow {
-  background: linear-gradient(180deg, #34d399, #059669) !important;
-  box-shadow: 0 6px 0 #064e3b, 0 0 28px #4ade80 !important;
-  outline: 3px solid #fef08a;
+.option-item.state-correct {
+  border-color: var(--accent);
+  background: rgba(16, 185, 129, 0.14);
 }
 
-.answer-tile-3d.wrong-dim {
-  background: linear-gradient(180deg, #fb7185, #e11d48) !important;
-  box-shadow: 0 6px 0 #881337 !important;
-  opacity: 0.85;
+.option-item.state-correct .option-key {
+  background: var(--accent);
+  color: #04130d;
+  border-color: var(--accent);
 }
 
-/* Pop-Up Feedback Card */
-.feedback-popup-3d {
-  margin-top: 14px;
+.option-item.state-wrong {
+  border-color: var(--danger);
+  background: rgba(244, 63, 94, 0.12);
+}
+
+.option-item.state-wrong .option-key {
+  background: var(--danger);
+  color: #ffffff;
+  border-color: var(--danger);
+}
+
+/* Minimalist Feedback Card */
+.feedback-card {
+  margin-top: 16px;
   padding: 16px;
-  border-radius: 18px;
+  border-radius: var(--radius-md);
   display: none;
-  animation: popScale 0.25s ease;
 }
 
-.feedback-popup-3d.show {
+.feedback-card.visible {
   display: block;
 }
 
-.feedback-popup-3d.good {
-  background: rgba(6, 78, 59, 0.92);
-  border: 3px solid #34d399;
+.feedback-card.correct {
+  background: rgba(16, 185, 129, 0.08);
+  border: 1px solid rgba(16, 185, 129, 0.35);
 }
 
-.feedback-popup-3d.retry {
-  background: rgba(120, 53, 15, 0.94);
-  border: 3px solid #fbbf24;
+.feedback-card.review {
+  background: rgba(245, 158, 11, 0.08);
+  border: 1px solid rgba(245, 158, 11, 0.35);
 }
 
-/* ==========================================================================
-   SIMPLIFIED VISUAL TEACHER RESULTS DASHBOARD
-   ========================================================================== */
-.teacher-panel-3d {
-  background: var(--card-bg);
-  border: 3px solid var(--card-border);
-  border-radius: 24px;
-  padding: 26px;
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6);
+.feedback-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.82rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 6px;
 }
 
-.stat-cards-4 {
+.feedback-text {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin-bottom: 14px;
+}
+
+/* Summary KPI Grid */
+.summary-metrics {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 14px;
-  margin: 18px 0;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin: 24px 0;
 }
 
-@media (max-width: 800px) {
-  .stat-cards-4 {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-.stat-card-3d {
-  background: rgba(7, 18, 34, 0.85);
-  border: 2px solid rgba(56, 189, 248, 0.3);
-  border-radius: 18px;
+.summary-box {
+  background: rgba(8, 12, 20, 0.6);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-md);
   padding: 16px;
   text-align: center;
 }
 
-.stat-big {
-  font-size: 1.9rem;
-  font-weight: 900;
+.summary-num {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--text-primary);
 }
 
-.q-bar-item {
-  background: rgba(15, 28, 48, 0.9);
-  border: 2px solid rgba(148, 163, 184, 0.22);
-  border-radius: 14px;
-  padding: 12px 16px;
-  margin-bottom: 10px;
-  cursor: pointer;
-  transition: all 0.15s;
-}
-
-.q-bar-item:hover, .q-bar-item.active-q {
-  border-color: #38bdf8;
-  background: rgba(14, 165, 233, 0.15);
+.summary-lbl {
+  font-size: 0.74rem;
+  color: var(--text-muted);
+  margin-top: 4px;
 }

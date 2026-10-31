@@ -1,469 +1,408 @@
 // ============================================================================
-// ECOQUEST 3D: KID-FRIENDLY QUESTION BANK & 3D SCENE LABELS
+// ECOQUEST 3D — CLEAN SCIENTIFIC QUESTION BANK & 3D SPECIMEN INDICATORS
 // KSSR Year 6 Science — Unit 4: Interaction Among Living Things
 // ============================================================================
 
 const QUESTION_BANK = [
   {
     id: 1,
-    code: "Q1-MUT-CORAL",
+    code: "01 // MUTUALISM (+ / +)",
     category: "Mutualism (+ / +)",
-    bloomLevel: "Understand & Classify",
-    title: "3D Reef: Clownfish & Sea Anemone",
-    scenario: "Spin the 3D Coral Reef! Watch the orange Clownfish swimming safely inside the Sea Anemone's stinging tentacles.",
-    question: "How do the Clownfish and Sea Anemone help EACH OTHER (+ / +)?",
-    audioScript: "Level 1! Look at the 3D coral reef. How do the Clownfish and the Sea Anemone help each other in Mutualism?",
+    title: "Coral Reef Symbiosis: Clownfish & Sea Anemone",
+    scenario: "Observation: In the 3D reef model, an orange clownfish swims unharmed among the stinging tentacles of a sea anemone.",
+    question: "Why is the interaction between the clownfish and sea anemone classified as mutualism (+ / +)?",
+    audioScript: "Observation 1. In the coral reef model, a clownfish lives among the stinging tentacles of a sea anemone. Why is this interaction classified as mutualism?",
     tags3D: [
-      { icon: "🐠", name: "Clownfish", effect: "+ Safe Shelter", color: "#22c55e" },
-      { icon: "🌸", name: "Sea Anemone", effect: "+ Cleaned & Protected", color: "#22c55e" }
+      { name: "Clownfish", effect: "+ Protected from predators", color: "#10b981" },
+      { name: "Sea Anemone", effect: "+ Cleaned & attracts prey", color: "#10b981" }
     ],
-    clue: "In Mutualism (+ / +), BOTH animals win! The fish gets a safe home, and the anemone gets cleaned.",
+    clue: "In mutualism (+ / +), both species gain a clear survival advantage from living together.",
     options: [
       {
         id: "A",
-        text: "Clownfish gets a safe home (+), and Sea Anemone gets cleaned (+).",
+        text: "The clownfish gains shelter from predators (+), while the sea anemone is cleaned and attracts prey (+).",
         isCorrect: true,
-        feedback: "Awesome job! Both partners win (+ / +): the Clownfish hides safely from big fish, and it cleans the Sea Anemone!"
+        feedback: "Both organisms benefit (+ / +): a mucus layer protects the clownfish from stings, while the clownfish defends and cleans the sea anemone."
       },
       {
         id: "B",
-        text: "Clownfish gets a home (+), but Sea Anemone gets nothing (0).",
+        text: "The clownfish gains shelter (+), while the sea anemone is neither helped nor harmed (0).",
         isCorrect: false,
-        misconceptionTag: "Confusing Mutualism with Commensalism",
-        feedback: "Almost! The Sea Anemone actually benefits too (+) because the Clownfish cleans it and chases away predators!"
+        feedback: "That describes commensalism (+ / 0). In reality, the sea anemone also benefits (+) because the clownfish removes parasites and wards off butterflyfish."
       },
       {
         id: "C",
-        text: "Clownfish eats and hurts the Sea Anemone (+ / -).",
+        text: "The clownfish feeds on the sea anemone's tentacles, weakening the host (+ / -).",
         isCorrect: false,
-        misconceptionTag: "Confusing Mutualism with Parasitism",
-        feedback: "Not quite! Clownfish never hurt the Sea Anemone—they are best friends that protect each other (+ / +)."
+        feedback: "That would be parasitism (+ / -). Clownfish do not damage healthy tentacles; both partners thrive together (+ / +)."
       },
       {
         id: "D",
-        text: "Sea Anemone stings and eats the Clownfish.",
+        text: "The sea anemone stings and digests the clownfish as prey.",
         isCorrect: false,
-        misconceptionTag: "Confusing Symbiosis with Prey-Predator",
-        feedback: "Look at the 3D fish! Clownfish have special slimy skin so the tentacles don't sting them. Both help each other (+ / +)!"
+        feedback: "Clownfish possess a specialized mucus coating that prevents the anemone's stinging cells from firing."
       }
-    ],
-    classStats: { accuracy: 84, distractorCounts: { A: 27, B: 3, C: 1, D: 1 } }
+    ]
   },
   {
     id: 2,
-    code: "Q2-COM-REMORA",
+    code: "02 // COMMENSALISM (+ / 0)",
     category: "Commensalism (+ / 0)",
-    bloomLevel: "Analyse & Differentiate",
-    title: "3D Ocean: Shark & Remora Fish",
-    scenario: "Rotate the 3D Shark! See the blue Remora fish hitching a free ride underneath the Shark's belly to catch falling food crumbs.",
-    question: "Why is the Remora and Shark called Commensalism (+ / 0)?",
-    audioScript: "Level 2! Look under the 3D shark's belly. Why is the Remora and Shark relationship called Commensalism?",
+    title: "Pelagic Hitchhiker: Remora Fish & Shark",
+    scenario: "Observation: A remora fish attaches beneath the shark's belly using a modified dorsal suction disc to catch drifting food scraps.",
+    question: "Why do marine biologists classify the remora and shark relationship as commensalism (+ / 0)?",
+    audioScript: "Observation 2. A remora fish attaches underneath a shark to catch drifting food scraps. Why is this classified as commensalism?",
     tags3D: [
-      { icon: "🐟", name: "Remora Fish", effect: "+ Free Ride & Food", color: "#38bdf8" },
-      { icon: "🦈", name: "Shark", effect: "0 Not Helped or Hurt", color: "#94a3b8" }
+      { name: "Remora Fish", effect: "+ Transport & food scraps", color: "#38bdf8" },
+      { name: "Shark", effect: "0 Unaffected host", color: "#94a3b8" }
     ],
-    clue: "Ask yourself: Does the big Shark care if the tiny Remora catches leftover crumbs floating away?",
+    clue: "Consider whether the shark loses any nutrients or gains any survival benefit from leftover scraps floating away.",
     options: [
       {
         id: "A",
-        text: "Both benefit because the Remora hunts food for the Shark (+ / +).",
+        text: "Both benefit equally because the remora hunts prey to feed the shark (+ / +).",
         isCorrect: false,
-        misconceptionTag: "False Mutualism (Thinking Remora feeds Shark)",
-        feedback: "Careful! The tiny Remora doesn't feed the Shark—it just eats leftover crumbs floating away. The Shark isn't helped or hurt (0)!"
+        feedback: "The remora does not hunt food for the shark; it simply consumes tiny leftover scraps that drift away after the shark feeds."
       },
       {
         id: "B",
-        text: "Remora gets a free ride & food scraps (+), while the Shark is unaffected (0).",
+        text: "The remora gains free transport, protection, and food scraps (+), while the shark is unaffected (0).",
         isCorrect: true,
-        feedback: "Spot on! That's Commensalism (+ / 0): the Remora wins (+), and the big Shark doesn't gain or lose anything (0)!"
+        feedback: "In commensalism (+ / 0), the remora gains transport and leftover food (+), while the shark experiences neither harm nor benefit (0)."
       },
       {
         id: "C",
-        text: "Remora sucks blood from the Shark's belly (+ / -).",
+        text: "The remora pierces the shark's skin to draw blood (+ / -).",
         isCorrect: false,
-        misconceptionTag: "Thinking Remora suction disc sucks blood",
-        feedback: "Look closely at the 3D Remora! Its head pad only holds on like a suction cup for a free ride—it never sucks blood (0)!"
+        feedback: "Unlike parasites such as lampreys, the remora's flat suction disc holds onto the skin surface without piercing tissue (0)."
       },
       {
         id: "D",
-        text: "Shark and Remora fight over the same big prey (- / -).",
+        text: "The shark and remora compete for the same large fish (- / -).",
         isCorrect: false,
-        misconceptionTag: "Confusing Commensalism with Competition",
-        feedback: "Not quite! The Remora only eats tiny leftover crumbs that the big Shark ignores."
+        feedback: "Sharks hunt large prey, whereas remoras only consume tiny floating fragments ignored by the shark."
       }
-    ],
-    classStats: { accuracy: 53, distractorCounts: { A: 11, B: 17, C: 3, D: 1 } }
+    ]
   },
   {
     id: 3,
-    code: "Q3-COM-EPIPHYTE",
+    code: "03 // PLANT COMMENSALISM (+ / 0)",
     category: "Plant Commensalism (+ / 0)",
-    bloomLevel: "Evaluate & Distinguish",
-    title: "3D Canopy: Bird's Nest Fern on Oil Palm",
-    scenario: "Spin the 3D Oil Palm Tree! Notice the green Bird's Nest Fern sitting on the outer bark to reach the glowing golden Sun.",
-    question: "Why is the Bird's Nest Fern NOT a parasite? (It is Commensalism + / 0!)",
-    audioScript: "Level 3! Look at the green Bird's Nest Fern sitting on the oil palm trunk. Why is it Commensalism and NOT a parasite?",
+    title: "Canopy Epiphyte: Bird's Nest Fern on Oil Palm",
+    scenario: "Observation: A green Bird's Nest Fern grows high on the outer bark of an oil palm trunk to reach direct sunlight.",
+    question: "Why is the Bird's Nest Fern classified as commensalism (+ / 0) rather than parasitism?",
+    audioScript: "Observation 3. A green Bird's Nest Fern grows on the outer bark of an oil palm trunk. Why is it classified as commensalism rather than parasitism?",
     tags3D: [
-      { icon: "🌿", name: "Bird's Nest Fern", effect: "+ Gets Sunlight", color: "#4ade80" },
-      { icon: "🌴", name: "Oil Palm Tree", effect: "0 Bark Unharmed", color: "#facc15" }
+      { name: "Bird's Nest Fern", effect: "+ Elevated for sunlight", color: "#10b981" },
+      { name: "Oil Palm Trunk", effect: "0 Outer bark unharmed", color: "#94a3b8" }
     ],
-    clue: "Look at the fern's bright green leaves! Since it makes its own food from sunlight, does it steal food from the tree?",
+    clue: "Notice the fern's green chlorophyll leaves: it synthesizes its own food rather than tapping into the tree's internal sap.",
     options: [
       {
         id: "A",
-        text: "Its roots drill deep inside the tree to steal water and sugar (+ / -).",
+        text: "Its roots penetrate the oil palm's vascular tissue to extract water and glucose (+ / -).",
         isCorrect: false,
-        misconceptionTag: "Assuming all plants on trees are parasites",
-        feedback: "Watch out for this famous trap! Bird's Nest Fern has green leaves to make its own food—it only sits on the outside bark without hurting the tree (0)!"
+        feedback: "Parasitic plants like mistletoe penetrate stems, but the Bird's Nest Fern is an epiphyte that only clings to the outer bark surface (0)."
       },
       {
         id: "B",
-        text: "It rests on the outer bark for sunlight & makes its own food (+), without hurting the tree (0).",
+        text: "It perches on the outer bark to access sunlight and photosynthesizes its own food (+), leaving the tree unharmed (0).",
         isCorrect: true,
-        feedback: "Brilliant! Because the green fern makes its own food via photosynthesis (+), the Oil Palm tree is completely unharmed (0)!"
+        feedback: "As a green epiphyte, the Bird's Nest Fern produces its own food via photosynthesis (+) and uses the trunk strictly for physical support (0)."
       },
       {
         id: "C",
-        text: "It gives extra sugar to feed the Oil Palm tree (+ / +).",
+        text: "It supplies excess glucose into the oil palm trunk during dry seasons (+ / +).",
         isCorrect: false,
-        misconceptionTag: "Confusing Epiphyte with Mutualism",
-        feedback: "Almost! The fern keeps the food it makes for itself, so the Oil Palm tree is neither helped nor harmed (0)."
+        feedback: "The fern's roots do not connect to the oil palm's phloem, so no nutrients are exchanged between the two plants (0)."
       },
       {
         id: "D",
-        text: "The Oil Palm tree fights the fern for soil space (- / -).",
+        text: "The oil palm crown blocks the fern to prevent it from growing (- / -).",
         isCorrect: false,
-        misconceptionTag: "Confusing Epiphyte with Competition",
-        feedback: "Look at the 3D trunk—the fern sits high up on the bark, not in the ground soil!"
+        feedback: "Perching on the upper trunk actually helps the fern escape the dark forest floor to gain better light exposure (+)."
       }
-    ],
-    classStats: { accuracy: 47, distractorCounts: { A: 14, B: 15, C: 2, D: 1 } }
+    ]
   },
   {
     id: 4,
-    code: "Q4-PAR-RAFFLESIA",
+    code: "04 // PLANT PARASITISM (+ / -)",
     category: "Plant Parasitism (+ / -)",
-    bloomLevel: "Analyse",
-    title: "3D Jungle: Giant Rafflesia & Vine",
-    scenario: "Check out the giant red 3D Rafflesia flower! Notice it has NO green leaves at all—it grows directly on a jungle vine.",
-    question: "How does the giant Rafflesia survive without any green leaves?",
-    audioScript: "Level 4! The giant Rafflesia flower has no green leaves to make food. How does it survive on the jungle vine?",
+    title: "Holoparasite: Giant Rafflesia & Tetrastigma Vine",
+    scenario: "Observation: Blooming on the rainforest floor, the giant Rafflesia has no leaves, no stem, and no chlorophyll.",
+    question: "How does the Rafflesia obtain nutrients, and how does this affect the host vine?",
+    audioScript: "Observation 4. The giant Rafflesia flower has no green leaves and no chlorophyll. How does it obtain nutrients from the host vine?",
     tags3D: [
-      { icon: "🌺", name: "Rafflesia (Parasite)", effect: "+ Steals Nutrients", color: "#f87171" },
-      { icon: "🪵", name: "Host Vine", effect: "- Weakened & Harmed", color: "#fb923c" }
+      { name: "Rafflesia Flower", effect: "+ Absorbs host nutrients", color: "#f43f5e" },
+      { name: "Tetrastigma Vine", effect: "- Drained of water & sap", color: "#f59e0b" }
     ],
-    clue: "With no green leaves to make food from sunlight, the Rafflesia must steal food from the vine (+ / -)!",
+    clue: "Without chlorophyll for photosynthesis, the Rafflesia depends entirely on extracting nutrients from inside the host vine.",
     options: [
       {
         id: "A",
-        text: "Commensalism (+ / 0) — It sits harmlessly on the vine.",
+        text: "Commensalism (+ / 0) — It rests on the vine's bark without absorbing nutrients.",
         isCorrect: false,
-        misconceptionTag: "Confusing Parasitic Rafflesia with Epiphytes",
-        feedback: "Remember: Rafflesia has NO green leaves! It has to drain water and food from inside the vine, which hurts the vine (-)."
+        feedback: "Because Rafflesia lacks green leaves to photosynthesize, it cannot survive by merely resting on the surface."
       },
       {
         id: "B",
-        text: "Parasitism (+ / -) — It steals water & nutrients from the host vine (+), weakening the vine (-).",
+        text: "Parasitism (+ / -) — It absorbs water and nutrients directly from the host vine (+), weakening the vine (-).",
         isCorrect: true,
-        feedback: "Spot on! Rafflesia is a parasite (+ / -) that absorbs nutrients right out of the host vine!"
+        feedback: "Rafflesia is a holoparasite (+ / -) whose thread-like haustoria penetrate the Tetrastigma vine to draw out water and nutrients."
       },
       {
         id: "C",
-        text: "Mutualism (+ / +) — Both the Rafflesia and vine feed each other.",
+        text: "Mutualism (+ / +) — It exchanges soil minerals for sugar from the vine.",
         isCorrect: false,
-        misconceptionTag: "Confusing Parasitism with Mutualism",
-        feedback: "Not quite! Rafflesia only takes food and gives nothing back, so the host vine is harmed (-)."
+        feedback: "Rafflesia has no roots in the soil; it only extracts resources from the host vine without providing any benefit in return (+ / -)."
       },
       {
         id: "D",
-        text: "Prey-Predator — Rafflesia eats insects like a pitcher plant.",
+        text: "Prey-Predator — It traps and digests carrion flies like a pitcher plant.",
         isCorrect: false,
-        misconceptionTag: "Confusing Rafflesia with Carnivorous Plants",
-        feedback: "Flies only visit Rafflesia to spread pollen! Its food comes from parasitizing the vine (+ / -)."
+        feedback: "Carrion flies only pollinate the flower; all of Rafflesia's nutrition is drawn from the host vine (+ / -)."
       }
-    ],
-    classStats: { accuracy: 78, distractorCounts: { A: 4, B: 25, C: 1, D: 2 } }
+    ]
   },
   {
     id: 5,
-    code: "Q5-PAR-TAPEWORM",
+    code: "05 // ENDOPARASITISM (+ / -)",
     category: "Animal Parasitism (+ / -)",
-    bloomLevel: "Understand",
-    title: "3D Vet Clinic: Cat & Tapeworm",
-    scenario: "Spin the 3D Vet Model! A poor orange cat is thin and weak because a yellow tapeworm is living inside its intestine.",
-    question: "In this Parasitism (+ / -), which one is the Parasite (+) and which is the Host (-)?",
-    audioScript: "Level 5! A cat is weak because a tapeworm lives inside its intestine. Which is the parasite and which is the host?",
+    title: "Endoparasite: Host Mammal & Intestinal Tapeworm",
+    scenario: "Observation: A cat becomes malnourished and weak despite a normal diet because a tapeworm inhabits its small intestine.",
+    question: "Identify the parasite (+) and the host (-) in this internal relationship:",
+    audioScript: "Observation 5. A cat becomes malnourished because a tapeworm lives inside its intestine. Identify the parasite and the host.",
     tags3D: [
-      { icon: "🪱", name: "Tapeworm", effect: "+ Parasite (Steals Food)", color: "#4ade80" },
-      { icon: "🐱", name: "Orange Cat", effect: "- Host (Gets Weak)", color: "#f87171" }
+      { name: "Tapeworm", effect: "+ Parasite (Absorbs food)", color: "#10b981" },
+      { name: "Host Cat", effect: "- Deprived of nutrients", color: "#f43f5e" }
     ],
-    clue: "The thief that steals digested food is the Parasite (+), and the animal that gets sick is the Host (-).",
+    clue: "The organism stealing digested nutrients is the parasite (+), and the organism suffering malnutrition is the host (-).",
     options: [
       {
         id: "A",
-        text: "Parasite: Tapeworm (+) | Host: Cat (-). The worm steals food inside the cat's gut.",
+        text: "Parasite: Tapeworm (+) | Host: Cat (-). The tapeworm absorbs digested nutrients inside the cat's intestine.",
         isCorrect: true,
-        feedback: "Well done! The tapeworm (+) steals digested nutrients, leaving the host cat (-) weak and hungry."
+        feedback: "The tapeworm (+) is an endoparasite that absorbs pre-digested nutrients, leaving the host cat (-) nutrient-deficient."
       },
       {
         id: "B",
-        text: "Parasite: Cat (+) | Host: Tapeworm (-). The cat eats the worm.",
+        text: "Parasite: Cat (+) | Host: Tapeworm (-). The cat digests the tapeworm for protein.",
         isCorrect: false,
-        misconceptionTag: "Reversing Parasite and Host Roles",
-        feedback: "Oops, you swapped them! The cat being harmed is the Host (-), and the worm stealing food inside is the Parasite (+)."
+        feedback: "Those roles are reversed: the larger animal suffering harm is the host (-), while the internal worm is the parasite (+)."
       },
       {
         id: "C",
-        text: "Commensalism (+ / 0) because the worm doesn't hurt the cat.",
+        text: "Commensalism (+ / 0) because the tapeworm only consumes undigested waste.",
         isCorrect: false,
-        misconceptionTag: "Thinking internal worms are harmless",
-        feedback: "Tapeworms steal vital food meant for the cat, making the cat sick and thin (-). That's Parasitism (+ / -)!"
+        feedback: "Tapeworms absorb essential glucose and amino acids in the small intestine, directly harming the host (-)."
       },
       {
         id: "D",
-        text: "Mutualism (+ / +) because the worm helps the cat digest food.",
+        text: "Mutualism (+ / +) because the tapeworm assists the cat with digestion.",
         isCorrect: false,
-        misconceptionTag: "Confusing Tapeworms with Good Gut Bacteria",
-        feedback: "Careful! Tapeworms are harmful parasites (+ / -), not helpful bacteria."
+        feedback: "Unlike beneficial gut bacteria, tapeworms deplete the host's nutrients and cause illness (+ / -)."
       }
-    ],
-    classStats: { accuracy: 88, distractorCounts: { A: 28, B: 2, C: 1, D: 1 } }
+    ]
   },
   {
     id: 6,
-    code: "Q6-MUT-HERMIT",
+    code: "06 // MUTUALISM (+ / +)",
     category: "Mutualism (+ / +)",
-    bloomLevel: "Apply",
-    title: "3D Beach: Hermit Crab & Sea Anemone",
-    scenario: "Watch the 3D Hermit Crab walking across the sand with a pink Sea Anemone riding right on top of its shell!",
-    question: "Why does the Hermit Crab carry the Sea Anemone on its shell?",
-    audioScript: "Level 6! Watch the 3D Hermit Crab carrying a Sea Anemone on its shell. How do both animals help each other?",
+    title: "Tidal Partnership: Hermit Crab & Sea Anemone",
+    scenario: "Observation: A hermit crab carries a sea anemone on top of its borrowed shell across the seabed.",
+    question: "How do both the hermit crab and the sea anemone benefit from this partnership?",
+    audioScript: "Observation 6. A hermit crab carries a sea anemone on top of its shell. How do both organisms benefit?",
     tags3D: [
-      { icon: "🦀", name: "Hermit Crab", effect: "+ Stinging Bodyguard", color: "#4ade80" },
-      { icon: "🌸", name: "Sea Anemone", effect: "+ Free Travel to Food", color: "#4ade80" }
+      { name: "Hermit Crab", effect: "+ Stinging defense shield", color: "#10b981" },
+      { name: "Sea Anemone", effect: "+ Mobility to feeding areas", color: "#10b981" }
     ],
-    clue: "The anemone's stings scare away crab-eating octopuses (+), while the crab walks the anemone to new food spots (+)!",
+    clue: "The anemone's stinging tentacles deter octopuses (+), while the mobile crab carries the stationary anemone to richer feeding grounds (+).",
     options: [
       {
         id: "A",
-        text: "Mutualism (+ / +): Anemone's stings protect the crab, and the crab carries the anemone to food!",
+        text: "The anemone's stinging cells deter predators (+), while the crab transports the anemone to new food sources (+).",
         isCorrect: true,
-        feedback: "Superb! The crab gets a stinging bodyguard (+), and the anemone gets a free taxi ride to more food (+)!"
+        feedback: "Both partners gain a clear advantage (+ / +): the crab gains protection, and the sessile anemone gains mobility and food scraps."
       },
       {
         id: "B",
-        text: "Parasitism (+ / -): The crab slowly eats the sea anemone.",
+        text: "The hermit crab parasitizes the base of the sea anemone for food (+ / -).",
         isCorrect: false,
-        misconceptionTag: "Confusing Shell Transport with Predation",
-        feedback: "Not at all! The crab carefully protects its anemone partner because the anemone scares predators away (+ / +)."
+        feedback: "Hermit crabs actively protect their sea anemone partner and even transfer it when moving to a larger shell (+ / +)."
       },
       {
         id: "C",
-        text: "Commensalism (+ / 0): Only the crab benefits; the anemone gets nothing.",
+        text: "Only the hermit crab benefits (+), while the sea anemone gains nothing from moving (0).",
         isCorrect: false,
-        misconceptionTag: "Forgetting Sea Anemone gains mobility & scraps",
-        feedback: "Remember: Sea anemones are normally stuck on one rock! Riding on the crab lets it reach way more food (+ / +)."
+        feedback: "Because sea anemones are normally stationary, riding on the crab's shell exposes them to wider food sources and food scraps (+ / +)."
       },
       {
         id: "D",
-        text: "Competition (- / -): Both fight to live inside the snail shell.",
+        text: "Both species compete for space inside the snail shell (- / -).",
         isCorrect: false,
-        misconceptionTag: "Confusing Shell Sharing with Competition",
-        feedback: "The crab lives INSIDE the shell while the anemone sits on TOP of the shell—they work as a team (+ / +)!"
+        feedback: "The crab occupies the interior of the shell while the anemone attaches to the exterior surface (+ / +)."
       }
-    ],
-    classStats: { accuracy: 72, distractorCounts: { A: 23, B: 2, C: 6, D: 1 } }
+    ]
   },
   {
     id: 7,
-    code: "Q7-MATRIX-SYMBIOSIS",
-    category: "Symbiosis Code Lab",
-    bloomLevel: "Evaluate",
-    title: "3D Crystal Lab: Match the (+ / 0 / -) Code!",
-    scenario: "Spin the 3 glowing 3D Crystals! Green is Mutualism [+ / +], Blue is Commensalism [+ / 0], and Red is Parasitism [+ / -].",
-    question: "Which row matches ALL THREE 3D Crystals with the right Malaysian animals & plants?",
-    audioScript: "Level 7! Match the Green Plus-Plus, Blue Plus-Zero, and Red Plus-Minus crystals to the correct living things.",
+    code: "07 // ECOLOGICAL OUTCOME MATRIX",
+    category: "Symbiosis Synthesis",
+    title: "Ecological Code Classification: [+ / +], [+ / 0], [+ / -]",
+    scenario: "Observation: The three 3D crystals represent Mutualism [+ / +], Commensalism [+ / 0], and Parasitism [+ / -].",
+    question: "Which row accurately pairs all three ecological outcome codes with their correct species examples?",
+    audioScript: "Observation 7. Match the three ecological outcome codes with their accurate species examples.",
     tags3D: [
-      { icon: "💎", name: "Green [+ / +]", effect: "Mutualism (Both Win)", color: "#4ade80" },
-      { icon: "💎", name: "Blue [+ / 0]", effect: "Commensalism (1 Wins, 1 Neutral)", color: "#38bdf8" },
-      { icon: "💎", name: "Red [+ / -]", effect: "Parasitism (1 Wins, 1 Hurt)", color: "#f87171" }
+      { name: "Emerald [+ / +]", effect: "Mutualism", color: "#10b981" },
+      { name: "Cyan [+ / 0]", effect: "Commensalism", color: "#38bdf8" },
+      { name: "Rose [+ / -]", effect: "Parasitism", color: "#f43f5e" }
     ],
-    clue: "Buffalo & Mynah Bird both win [+ / +]. Wild Orchid sits harmlessly on a tree [+ / 0]. Tick sucks a dog's blood [+ / -].",
+    clue: "Mynah birds eat ticks off buffaloes [+ / +]; wild orchids perch harmlessly on tree bark [+ / 0]; ticks draw blood from dogs [+ / -].",
     options: [
       {
         id: "A",
-        text: "[+ / +] Mynah & Buffalo  |  [+ / 0] Orchid & Tree  |  [+ / -] Tick & Dog",
+        text: "[+ / +] Mynah & Buffalo  ·  [+ / 0] Wild Orchid & Tree  ·  [+ / -] Tick & Dog",
         isCorrect: true,
-        feedback: "Master Scientist! Mynah eats ticks off the buffalo [+ / +], Orchid perches harmlessly on bark [+ / 0], and Ticks suck dog blood [+ / -]!"
+        feedback: "Accurate classification across all three categories: Mutualism [+ / +], Commensalism [+ / 0], and Parasitism [+ / -]."
       },
       {
         id: "B",
-        text: "[+ / 0] Mynah & Buffalo  |  [+ / +] Remora & Shark  |  [+ / -] Rafflesia & Vine",
+        text: "[+ / 0] Mynah & Buffalo  ·  [+ / +] Remora & Shark  ·  [+ / -] Rafflesia & Vine",
         isCorrect: false,
-        misconceptionTag: "Swapping Mutualism and Commensalism",
-        feedback: "Oops! You swapped [+ / +] and [+ / 0]. Remember: Remora & Shark is Commensalism [+ / 0]."
+        feedback: "Mutualism [+ / +] and Commensalism [+ / 0] are swapped in the first two pairs."
       },
       {
         id: "C",
-        text: "[+ / +] Mynah & Buffalo  |  [+ / 0] Rafflesia & Vine  |  [+ / -] Orchid & Tree",
+        text: "[+ / +] Mynah & Buffalo  ·  [+ / 0] Rafflesia & Vine  ·  [+ / -] Wild Orchid & Tree",
         isCorrect: false,
-        misconceptionTag: "Swapping Epiphyte Orchid and Parasitic Rafflesia",
-        feedback: "Careful! Green Orchids make their own food [+ / 0], whereas leafless Rafflesia steals food from vines [+ / -]."
+        feedback: "Wild orchids photosynthesize on bark [+ / 0], whereas leafless Rafflesia parasitizes vines [+ / -]."
       },
       {
         id: "D",
-        text: "[+ / -] Clownfish & Anemone  |  [+ / 0] Orchid & Tree  |  [+ / +] Tick & Dog",
+        text: "[+ / -] Clownfish & Anemone  ·  [+ / 0] Wild Orchid & Tree  ·  [+ / +] Tick & Dog",
         isCorrect: false,
-        misconceptionTag: "Swapping Mutualism and Parasitism",
-        feedback: "Ticks hurt dogs [+ / -], while Clownfish and Anemones help each other [+ / +]!"
+        feedback: "Ticks harm dogs [+ / -], whereas clownfish and sea anemones mutually benefit [+ / +]."
       }
-    ],
-    classStats: { accuracy: 66, distractorCounts: { A: 21, B: 5, C: 5, D: 1 } }
+    ]
   },
   {
     id: 8,
-    code: "Q8-COMP-FOREST",
+    code: "08 // INTRASPECIFIC COMPETITION",
     category: "Plant Competition",
-    bloomLevel: "Analyse",
-    title: "3D Greenhouse: Crowded vs. Spaced Pots",
-    scenario: "Compare the two 3D Flower Pots! Left Pot has 16 crowded, tiny yellow stems. Right Pot has 3 tall, lush green trees.",
-    question: "What 4 things are the crowded young plants competing for?",
-    audioScript: "Level 8! Look at the two 3D flower pots. What four basic needs are the crowded plants competing for?",
+    title: "Resource Competition: Crowded vs. Spaced Saplings",
+    scenario: "Observation: In the 3D greenhouse model, 16 crowded saplings in the left pot grow stunted and pale compared to 3 spaced saplings on the right.",
+    question: "Which four limited resources are the crowded saplings competing for?",
+    audioScript: "Observation 8. Compare the crowded pot on the left with the spaced pot on the right. Which four resources are the crowded saplings competing for?",
     tags3D: [
-      { icon: "🥀", name: "Left Pot (Crowded)", effect: "High Competition!", color: "#facc15" },
-      { icon: "🌳", name: "Right Pot (Spaced)", effect: "Plenty of Sunlight & Space", color: "#4ade80" }
+      { name: "Pot A (Crowded)", effect: "Stunted growth", color: "#f59e0b" },
+      { name: "Pot B (Spaced)", effect: "Optimal resource access", color: "#10b981" }
     ],
-    clue: "Do green plants fight for 'mates' or 'prey' like animals? No! Think of what roots and leaves need.",
+    clue: "Unlike animals, green plants do not compete for mates or prey—focus on what roots and leaves require.",
     options: [
       {
         id: "A",
-        text: "Sunlight, water, soil nutrients, and space.",
+        text: "Sunlight, water, soil nutrients (minerals), and space.",
         isCorrect: true,
-        feedback: "Bingo! Plants compete for 4 key needs: Sunlight, Water, Soil Nutrients (minerals), and Space for roots & leaves!"
+        feedback: "Plants compete for four essential growth factors: sunlight, water, dissolved soil minerals, and root/canopy space."
       },
       {
         id: "B",
-        text: "Sunlight, water, mates, and territory.",
+        text: "Sunlight, water, mates for reproduction, and territory.",
         isCorrect: false,
-        misconceptionTag: "Mixing up Animal Competition with Plant Competition",
-        feedback: "Haha, trees don't fight over mates! Only animals compete for mates. Plants need Sunlight, Water, Nutrients, and Space."
+        feedback: "Mates and territory apply to animal competition, not plant competition."
       },
       {
         id: "C",
         text: "Prey, shelter from predators, and water.",
         isCorrect: false,
-        misconceptionTag: "Thinking regular green trees hunt prey",
-        feedback: "Green trees make their own food from sunlight—they don't hunt prey! They compete for Sunlight, Water, Nutrients, and Space."
+        feedback: "Autotrophic green saplings produce food via photosynthesis rather than hunting prey."
       },
       {
         id: "D",
-        text: "Only water, because plants don't need space or sunlight.",
+        text: "Water only, as saplings do not require space or sunlight once sprouted.",
         isCorrect: false,
-        misconceptionTag: "Forgetting sunlight, nutrients, and space",
-        feedback: "Water isn't enough! Crowded plants also fight for Sunlight, Soil Nutrients, and Space."
+        feedback: "Without adequate sunlight, soil nutrients, and space, crowded saplings become etiolated and stunted."
       }
-    ],
-    classStats: { accuracy: 81, distractorCounts: { A: 26, B: 4, C: 1, D: 1 } }
+    ]
   },
   {
     id: 9,
-    code: "Q9-PREY-OWLS",
-    category: "Prey-Predator (Bio-Control)",
-    bloomLevel: "Predict",
-    title: "3D Plantation: Barn Owl & Rat",
-    scenario: "Watch the 3D Barn Owl swooping over the oil palm estate! Farmers build owl nest boxes so owls hunt rats that eat palm fruits.",
-    question: "When Barn Owls (Predators) hunt Rats (Prey), what happens to the oil palm harvest?",
-    audioScript: "Level 9! Watch the 3D Barn Owl swooping down to hunt rats. When owls hunt rats in an oil palm estate, what happens to the palm fruit harvest?",
+    code: "09 // PREY-PREDATOR & BIO-CONTROL",
+    category: "Prey-Predator Interaction",
+    title: "Biological Control: Barn Owls & Plantation Rats",
+    scenario: "Observation: In Malaysian oil palm estates, nest boxes are installed for Barn Owls to hunt rats that damage oil palm fruit bunches.",
+    question: "How does introducing Barn Owls (predators) affect the rat population and oil palm yield?",
+    audioScript: "Observation 9. Barn owls are introduced to oil palm estates as biological control agents. How does this affect rat populations and palm yield?",
     tags3D: [
-      { icon: "🦉", name: "Barn Owl", effect: "Predator (Hunts Rats)", color: "#38bdf8" },
-      { icon: "🐀", name: "Plantation Rat", effect: "Prey (Decreases ↓)", color: "#f87171" }
+      { name: "Barn Owl (Predator)", effect: "Controls pest population", color: "#38bdf8" },
+      { name: "Rat (Prey)", effect: "Population decreases ↓", color: "#f43f5e" }
     ],
-    clue: "More Owls = Fewer Rats eating the fruits! So what happens to the amount of healthy oil palm fruits?",
+    clue: "As natural predators reduce the rat pest population, fewer oil palm fruits are damaged.",
     options: [
       {
         id: "A",
-        text: "Rat numbers drop ↓, and healthy oil palm fruit harvest goes UP ↑ without poison!",
+        text: "Rat population decreases ↓, resulting in higher oil palm fruit yield ↑ without chemical pesticides.",
         isCorrect: true,
-        feedback: "Brilliant prediction! Barn Owls naturally reduce rat pests ↓, so farmers harvest way more oil palm fruits ↑ safely!"
+        feedback: "Biological control uses natural prey-predator interactions to suppress rat pests ↓ and protect crop yield ↑ sustainably."
       },
       {
         id: "B",
-        text: "Both rats and oil palm fruits disappear completely.",
+        text: "Both rat populations and oil palm fruit yields decline.",
         isCorrect: false,
-        misconceptionTag: "Thinking Owls eat oil palm fruits",
-        feedback: "Barn Owls are carnivores—they only eat rats, never oil palm fruits! Fewer rats means MORE palm fruits survive."
+        feedback: "Barn owls are carnivores that prey on rats, protecting the oil palm fruits from damage."
       },
       {
         id: "C",
-        text: "Rats are the Predators and Owls are the Prey, so rat numbers rise ↑.",
+        text: "Rats act as predators and owls as prey, causing rat numbers to rise ↑.",
         isCorrect: false,
-        misconceptionTag: "Reversing Predator and Prey Roles",
-        feedback: "Careful! The Barn Owl is the Predator that hunts the Rat (Prey), causing rat numbers to drop ↓."
+        feedback: "The barn owl is the apex predator in this food chain, while the rat is the prey."
       },
       {
         id: "D",
-        text: "Owls and Rats become best friends in Mutualism (+ / +).",
+        text: "Barn owls and rats form a mutualistic (+ / +) relationship.",
         isCorrect: false,
-        misconceptionTag: "Confusing Predation with Mutualism",
-        feedback: "Owls eat rats for dinner, so that's definitely Prey-Predator, not Mutualism!"
+        feedback: "Because owls hunt and consume rats, the interaction is strictly prey-predator."
       }
-    ],
-    classStats: { accuracy: 75, distractorCounts: { A: 24, B: 4, C: 3, D: 1 } }
+    ]
   },
   {
     id: 10,
-    code: "Q10-BOSS-ECOSYSTEM",
-    category: "🏆 FINAL BOSS STAGE",
-    bloomLevel: "Evaluate & Diagnose",
-    title: "3D Golden Island: Chief Ecologist Trophy!",
-    scenario: "Spin the 3D Golden Trophy! To win your Chief Ecologist Crown, pick the ONLY report below that is 100% scientifically true!",
-    question: "FINAL BOSS: Which wildlife report is 100% TRUE?",
-    audioScript: "Final Boss Level! Spin the golden trophy and choose the only wildlife report that is one hundred percent scientifically true!",
+    code: "10 // FINAL SYNTHESIS AUDIT",
+    category: "Ecosystem Synthesis",
+    title: "Final Ecological Audit: Verify the Field Report",
+    scenario: "Observation: Review the four ecological statements below to complete the 10-stage synthesis assessment.",
+    question: "Which statement below is 100% scientifically accurate regarding interactions among living things?",
+    audioScript: "Observation 10. Final synthesis audit. Select the statement that is one hundred percent scientifically accurate.",
     tags3D: [
-      { icon: "🏆", name: "Golden Trophy", effect: "+250 BONUS XP!", color: "#facc15" },
-      { icon: "👑", name: "Final Boss", effect: "Prove Your Mastery!", color: "#4ade80" }
+      { name: "Synthesis Stage", effect: "+250 Bonus Points", color: "#f59e0b" },
+      { name: "Mastery Check", effect: "All Interaction Types", color: "#10b981" }
     ],
-    clue: "Remember what you learned in Level 3: Bird's Nest Fern is Commensalism (+ / 0), while Mistletoe (Dedalu) is a Parasite (+ / -)!",
+    clue: "Verify each example using the [+ / +], [+ / 0], and [+ / -] framework.",
     options: [
       {
         id: "A",
-        text: "Bird's Nest Fern on an oil palm is Parasitism (+ / -).",
+        text: "Bird's Nest Fern on an oil palm is parasitism (+ / -), while remora on a shark is mutualism (+ / +).",
         isCorrect: false,
-        misconceptionTag: "Calling Bird's Nest Fern a parasite",
-        feedback: "Remember Level 3! Bird's Nest Fern makes its own food with green leaves—it is Commensalism (+ / 0), not a parasite!"
+        feedback: "Both the Bird's Nest Fern on a trunk and the remora on a shark are examples of commensalism (+ / 0)."
       },
       {
         id: "B",
-        text: "Mistletoe on a mango tree is Parasitism (+ / -), and Barnacles on a whale are Commensalism (+ / 0).",
+        text: "Mistletoe on a mango tree is parasitism (+ / -); barnacles on a whale are commensalism (+ / 0); nitrogen-fixing bacteria in legume roots are mutualism (+ / +).",
         isCorrect: true,
-        feedback: "CHAMPION ECOLOGIST! 🏆 Mistletoe steals sap from trees (+ / -), and Barnacles get a free ride on whales without hurting them (+ / 0)!"
+        feedback: "Complete mastery: Mistletoe extracts host sap (+ / -), barnacles gain transport on whales (+ / 0), and Rhizobium bacteria exchange nitrates for plant sugars (+ / +)."
       },
       {
         id: "C",
-        text: "Trees compete for mates, and two tigers fighting is Interspecific Competition.",
+        text: "Trees compete for mates, and two tigers fighting over territory is interspecific competition.",
         isCorrect: false,
-        misconceptionTag: "Confusing Plant & Animal Competition",
-        feedback: "Plants never compete for mates, and two tigers are the SAME species (Intraspecific)!"
+        feedback: "Plants never compete for mates, and competition between two individuals of the same species (tigers) is intraspecific."
       },
       {
         id: "D",
-        text: "Ticks sucking blood from a cat is Commensalism (+ / 0).",
+        text: "Ticks feeding on a cat are commensalism (+ / 0) because they do not cause immediate death.",
         isCorrect: false,
-        misconceptionTag: "Thinking blood-sucking ticks don't harm hosts",
-        feedback: "Ticks suck blood and make the cat sick (-), so Ticks on a cat are Parasitism (+ / -)!"
+        feedback: "Parasitism (+ / -) does not require immediate death; ticks deplete blood and transmit disease, harming the host (-)."
       }
-    ],
-    classStats: { accuracy: 59, distractorCounts: { A: 8, B: 19, C: 3, D: 2 } }
+    ]
   }
-];
-
-const CLASS_ROSTER_DATA = [
-  { id: "S01", name: "Ahmad Danial", preScore: 70, postRedemption: 90, flaggedQ: ["Q3 (Bird's Nest Fern)"], misconception: "Fern vs Parasite" },
-  { id: "S02", name: "Aisyah Humaira", preScore: 90, postRedemption: 100, flaggedQ: ["Q2 (Remora & Shark)"], misconception: "Remora Mutualism" },
-  { id: "S03", name: "Amirul Hakim", preScore: 50, postRedemption: 90, flaggedQ: ["Q2", "Q3"], misconception: "Commensalism (+/0)" },
-  { id: "S04", name: "Brendan Lim", preScore: 80, postRedemption: 100, flaggedQ: ["Q3 (Bird's Nest Fern)"], misconception: "Fern vs Parasite" },
-  { id: "S05", name: "Chong Wei Ting", preScore: 100, postRedemption: 100, flaggedQ: [], misconception: "All Mastered! 🌟" },
-  { id: "S06", name: "Darshini a/p Rajan", preScore: 60, postRedemption: 90, flaggedQ: ["Q2", "Q3"], misconception: "Commensalism (+/0)" },
-  { id: "S07", name: "Farah Nabila", preScore: 70, postRedemption: 90, flaggedQ: ["Q2 (Remora & Shark)"], misconception: "Remora Mutualism" },
-  { id: "S08", name: "Harith Iskandar", preScore: 50, postRedemption: 90, flaggedQ: ["Q2", "Q3", "Q10"], misconception: "Fern vs Parasite" }
 ];

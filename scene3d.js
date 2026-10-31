@@ -119,20 +119,15 @@ class EcoWorld3D {
   }
 
   checkClickBounce(e) {
-    // Trigger a playful 3D bounce whenever user clicks inside the 3D diorama
-    this.jumpBoost = 1.0;
+    this.jumpBoost = 0.7;
     if (typeof soundFX !== "undefined") {
-      soundFX.playTone(580, "sine", 0.09, 0, 0.1);
-    }
-    const badge = document.getElementById("diorama-interact-hint");
-    if (badge) {
-      badge.textContent = "✨ Nice! Drag left/right to rotate the 3D models 360°!";
+      soundFX.playTone(540, "sine", 0.07, 0, 0.08);
     }
   }
 
   triggerCelebration() {
-    this.celebrationTimer = 2.5;
-    this.jumpBoost = 1.6;
+    this.celebrationTimer = 2.0;
+    this.jumpBoost = 1.1;
   }
 
   resetCameraView() {
@@ -151,7 +146,7 @@ class EcoWorld3D {
   }
 
   // Helper material factory
-  mat(color, roughness = 0.4, metalness = 0.1, emissive = 0x000000) {
+  mat(color, roughness = 0.35, metalness = 0.15, emissive = 0x000000) {
     return new THREE.MeshStandardMaterial({
       color,
       roughness,
@@ -160,23 +155,31 @@ class EcoWorld3D {
     });
   }
 
-  // Build Floating 3D Island Platform Base
-  buildIslandBase(topColor = 0x0284c7, rimColor = 0x0369a1) {
+  // Build Sleek Minimalist 3D Studio Turntable Pedestal
+  buildIslandBase(topColor = 0x111c2d, rimColor = 0x10b981) {
     const baseGroup = new THREE.Group();
     const topCyl = new THREE.Mesh(
-      new THREE.CylinderGeometry(4.6, 4.2, 0.55, 32),
-      this.mat(topColor, 0.55)
+      new THREE.CylinderGeometry(4.4, 4.4, 0.28, 48),
+      this.mat(0x111a29, 0.4, 0.25)
     );
-    topCyl.position.y = -1.6;
+    topCyl.position.y = -1.55;
     topCyl.receiveShadow = true;
     baseGroup.add(topCyl);
 
-    const underCone = new THREE.Mesh(
-      new THREE.CylinderGeometry(4.2, 2.2, 1.2, 24),
-      this.mat(rimColor, 0.7)
+    const ring = new THREE.Mesh(
+      new THREE.TorusGeometry(4.42, 0.04, 16, 64),
+      this.mat(0x10b981, 0.2, 0.4, 0x059669)
     );
-    underCone.position.y = -2.45;
-    baseGroup.add(underCone);
+    ring.rotation.x = Math.PI / 2;
+    ring.position.y = -1.42;
+    baseGroup.add(ring);
+
+    const subCyl = new THREE.Mesh(
+      new THREE.CylinderGeometry(3.8, 3.4, 0.4, 48),
+      this.mat(0x090e17, 0.6, 0.2)
+    );
+    subCyl.position.y = -1.9;
+    baseGroup.add(subCyl);
 
     this.rootGroup.add(baseGroup);
   }
