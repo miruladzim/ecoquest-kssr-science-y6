@@ -16,14 +16,14 @@ class EcoSimEngine {
     this.pins = [];
     this.isQuizLayout = true;
 
-    // Balanced 3D Isometric Three-Quarter Camera Angle (22° Yaw, 23.5° Elevation)
+    // Balanced 3D Isometric Three-Quarter Camera Angle with pulled-back framing
     this.camState = {
-      theta: 0.38,
-      phi: 1.16,
-      radius: 13.2,
-      targetTheta: 0.38,
-      targetPhi: 1.16,
-      targetRadius: 13.2,
+      theta: 0.42,
+      phi: 1.12,
+      radius: 21.0,
+      targetTheta: 0.42,
+      targetPhi: 1.12,
+      targetRadius: 21.0,
       autoOrbit: true,
       isDragging: false,
       lastX: 0,
@@ -43,10 +43,10 @@ class EcoSimEngine {
     const h = window.innerHeight;
 
     this.scene = new THREE.Scene();
-    this.scene.fog = new THREE.FogExp2(0x070b14, 0.018);
+    this.scene.fog = new THREE.FogExp2(0x070b14, 0.014);
 
-    // Narrow 28° FOV gives that crisp, miniature 3D Isometric Diorama perspective
-    this.camera = new THREE.PerspectiveCamera(28, w / h, 0.1, 140);
+    // 35° FOV + 21-unit distance frames the entire 3D Isometric Cube with generous breathing room
+    this.camera = new THREE.PerspectiveCamera(35, w / h, 0.1, 160);
 
     this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     this.renderer.setSize(w, h);
@@ -146,8 +146,8 @@ class EcoSimEngine {
       (e) => {
         e.preventDefault();
         this.camState.targetRadius = Math.max(
-          9.5,
-          Math.min(21.0, this.camState.targetRadius + e.deltaY * 0.006)
+          13.0,
+          Math.min(30.0, this.camState.targetRadius + e.deltaY * 0.008)
         );
       },
       { passive: false }
@@ -165,7 +165,7 @@ class EcoSimEngine {
     const h = window.innerHeight;
     if (this.isQuizLayout && w > 960) {
       // Shift frustum window so (0,0,0) renders cleanly in the open left 58% of the screen with ZERO angle distortion
-      this.camera.setViewOffset(w, h, Math.round(w * 0.17), Math.round(h * 0.04), w, h);
+      this.camera.setViewOffset(w, h, Math.round(w * 0.17), Math.round(h * 0.05), w, h);
     } else {
       this.camera.clearViewOffset();
     }
@@ -174,19 +174,19 @@ class EcoSimEngine {
 
   setCameraPreset(preset) {
     if (preset === "front") {
-      // Balanced Three-Quarter Isometric View (shows side profile of animals + 3 cube faces)
-      this.camState.targetTheta = 0.38;
-      this.camState.targetPhi = 1.16;
-      this.camState.targetRadius = 13.2;
+      // Balanced Three-Quarter Isometric View
+      this.camState.targetTheta = 0.42;
+      this.camState.targetPhi = 1.12;
+      this.camState.targetRadius = 21.0;
     } else if (preset === "top") {
-      // Classic High 45° Isometric Corner Overview
+      // High 45° Isometric Corner Overview
       this.camState.targetTheta = Math.PI / 4;
-      this.camState.targetPhi = 0.86;
-      this.camState.targetRadius = 14.2;
+      this.camState.targetPhi = 0.82;
+      this.camState.targetRadius = 22.5;
     } else if (preset === "closeup") {
-      this.camState.targetTheta = 0.22;
-      this.camState.targetPhi = 1.24;
-      this.camState.targetRadius = 9.8;
+      this.camState.targetTheta = 0.28;
+      this.camState.targetPhi = 1.18;
+      this.camState.targetRadius = 15.0;
     } else if (preset === "orbit") {
       this.camState.autoOrbit = !this.camState.autoOrbit;
       const btn = document.getElementById("btn-cam-orbit");
@@ -209,7 +209,7 @@ class EcoSimEngine {
 
   triggerFeedbackPulse() {
     const prev = this.camState.targetRadius;
-    this.camState.targetRadius = Math.max(10.0, prev - 1.6);
+    this.camState.targetRadius = Math.max(15.0, prev - 2.2);
     setTimeout(() => {
       this.camState.targetRadius = prev;
     }, 450);
